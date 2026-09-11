@@ -61,13 +61,15 @@ Deno.serve(async (req) => {
     if (!(await verifyWebhook(req, rawBody, baseUrl))) return json({ error: "Invalid webhook signature" }, 401);
 
     const event = JSON.parse(rawBody);
+    if (!event.id || !event.event_type) return json({ error: "Invalid PayPal event" }, 400);
+
     const supabase = createClient(required("SUPABASE_URL"), required("SUPABASE_SECRET_KEY"), { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: inserted, error: insertError } = await supabase.from("paypal_webhook_events").insert({ event_id: event.id, event_type: event.event_type, payload: event }).select("event_id").maybeSingle();
     if (insertError && insertError.code !== "23505") throw insertError;
     if (!inserted) return json({ ok: true, duplicate: true });
 
     const resource = event.resource ?? {};
-    const subscriptionId = resource.id ?? resource.billing_agreement_id;
+    const subscriptionId = resource.id ?? resource.billing_agreement_id ?? resource.subscription_id;
     const userId = resource.custom_id;
     const code = planCode(resource.plan_id);
     const eventStatuses: Record<string, string> = {
@@ -75,6 +77,7 @@ Deno.serve(async (req) => {
       "BILLING.SUBSCRIPTION.SUSPENDED": "past_due",
       "BILLING.SUBSCRIPTION.CANCELLED": "cancelled",
       "BILLING.SUBSCRIPTION.EXPIRED": "expired",
+      "BILLING.SUBSCRIPTION.PAYMENT.FAILED": "past_due",
     };
     const status = eventStatuses[event.event_type] ?? (event.event_type === "PAYMENT.SALE.COMPLETED" ? "active" : null);
 
