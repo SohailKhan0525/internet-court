@@ -43,11 +43,12 @@ export default function Home() {
     if (argument.trim().length < 20) return setCaseError('Make the argument at least 20 characters so the jury has something real to judge.');
     setCreating(true);
     const supabase = getSupabase();
-    const slug = crypto.randomUUID().replaceAll('-', '').slice(0, 20);
-    const { data, error } = await supabase.from('cases').insert({ slug, owner_id: user.id, title: title.trim(), argument: argument.trim(), visibility: 'public' }).select('slug').single();
+    const { data, error } = await supabase.rpc('create_case', { p_title: title.trim(), p_argument: argument.trim(), p_visibility: 'public' });
     setCreating(false);
     if (error) return setCaseError(error.message);
-    window.location.href = `/c/${data.slug}`;
+    const created = Array.isArray(data) ? data[0] : data;
+    if (!created?.slug) return setCaseError('The case was not returned by the database.');
+    window.location.href = `/c/${created.slug}`;
   }
 
   async function signOut() {
