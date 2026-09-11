@@ -8,15 +8,15 @@ const plans = [
     code: 'jury_member',
     name: 'Jury Member',
     price: '$3',
-    description: 'For people who want more room to make their case.',
-    features: ['Unlimited case creation', 'Profile extras', 'Private and unlisted cases', 'Richer case history'],
+    description: 'For people who want more control over who can see their cases.',
+    features: ['Public case creation', 'Private cases', 'Unlisted cases', 'Membership badge'],
   },
   {
     code: 'supreme_court',
     name: 'Supreme Court',
     price: '$7',
-    description: 'For people who want the full Internet Court toolkit.',
-    features: ['Everything in Jury Member', 'Multiple ongoing cases', 'Custom verdict styling', 'Case analytics'],
+    description: 'For people who want the highest membership tier in Internet Court.',
+    features: ['Everything in Jury Member', 'Supreme Court membership tier', 'Membership badge', 'Priority tier recognition'],
   },
 ] as const;
 
@@ -68,7 +68,7 @@ export default function PricingPage() {
         <section className="section" style={{ paddingTop: 80 }}>
           <span className="eyebrow">Membership</span>
           <h1 className="section-title" style={{ fontSize: 'clamp(48px, 8vw, 80px)', marginBottom: 24 }}>Choose your seat in the court.</h1>
-          <p style={{ maxWidth: 680, color: '#a3a3a3', fontSize: 20, lineHeight: 1.55 }}>The jury stays open to everyone. Membership gives power users more ways to make, manage, and understand their cases.</p>
+          <p style={{ maxWidth: 680, color: '#a3a3a3', fontSize: 20, lineHeight: 1.55 }}>The jury stays open to everyone. Membership unlocks private and unlisted cases and identifies paid members on the court.</p>
         </section>
         <section className="section" aria-label="Subscription plans">
           <div className="grid">
@@ -89,7 +89,7 @@ export default function PricingPage() {
             ))}
           </div>
           {error && <div className="error" role="alert" style={{ marginTop: 24 }}>{error}</div>}
-          <p style={{ color: '#737373', marginTop: 32, fontSize: 14 }}>Payments are processed by PayPal. Internet Court does not store your PayPal credentials.</p>
+          <p style={{ color: '#737373', marginTop: 32, fontSize: 14 }}>Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record.</p>
         </section>
       </main>
       <footer className="footer"><span>Internet Court</span><a href="/">Return to court</a></footer>
