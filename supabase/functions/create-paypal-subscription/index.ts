@@ -29,6 +29,15 @@ function isPlanCode(value: unknown): value is PlanCode {
   return value === "jury_member" || value === "supreme_court";
 }
 
+function validateRedirectUrl(value: unknown, origin: string) {
+  if (typeof value !== "string") return null;
+  const url = new URL(value);
+  const expected = new URL(origin);
+  if (url.origin !== expected.origin) return null;
+  if (url.protocol !== expected.protocol) return null;
+  return url.toString();
+}
+
 async function getPayPalAccessToken(baseUrl: string) {
   const credentials = btoa(`${required("PAYPAL_CLIENT_ID")}:${required("PAYPAL_CLIENT_SECRET")}`);
   const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -63,17 +72,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const planCode = body?.plan_code;
-    const returnUrl = body?.return_url;
-    const cancelUrl = body?.cancel_url;
-
     if (!isPlanCode(planCode)) return json({ error: "Unknown subscription plan" }, 400);
-    if (typeof returnUrl !== "string" || typeof cancelUrl !== "string") return json({ error: "Return and cancel URLs are required" }, 400);
 
-    const returnUrlObject = new URL(returnUrl);
-    const cancelUrlObject = new URL(cancelUrl);
-    if (!/^https?:$/.test(returnUrlObject.protocol) || !/^https?:$/.test(cancelUrlObject.protocol)) {
-      return json({ error: "Invalid redirect URL" }, 400);
-    }
+    const origin = req.headers.get("origin");
+    if (!origin) return json({ error: "Request origin is required" }, 400);
+    const returnUrl = validateRedirectUrl(body?.return_url, origin);
+    const cancelUrl = validateRedirectUrl(body?.cancel_url, origin);
+    if (!returnUrl || !cancelUrl) return json({ error: "Redirect URLs must use the requesting site's origin" }, 400);
 
     const planId = Deno.env.get(PLAN_ENV_BY_CODE[planCode]);
     if (!planId) throw new Error(`Missing required secret: ${PLAN_ENV_BY_CODE[planCode]}`);
@@ -94,8 +99,8 @@ Deno.serve(async (req) => {
         application_context: {
           user_action: "SUBSCRIBE_NOW",
           shipping_preference: "NO_SHIPPING",
-          return_url: returnUrlObject.toString(),
-          cancel_url: cancelUrlObject.toString(),
+          return_url: returnUrl,
+          cancel_url: cancelUrl,
         },
       }),
     });
