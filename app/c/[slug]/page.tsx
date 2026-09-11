@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 
 type CaseRow = { id: string; slug: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
 
-export default function CasePage({ params }: { params: { slug: string } }) {
+export default function CasePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const [item, setItem] = useState<CaseRow | null>(null);
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState('');
@@ -16,14 +17,14 @@ export default function CasePage({ params }: { params: { slug: string } }) {
   useEffect(() => {
     const supabase = getSupabase();
     Promise.all([
-      supabase.from('cases').select('id,slug,title,argument,status,visibility,for_votes,against_votes,created_at').eq('slug', params.slug).maybeSingle(),
+      supabase.from('cases').select('id,slug,title,argument,status,visibility,for_votes,against_votes,created_at').eq('slug', slug).maybeSingle(),
       supabase.auth.getUser(),
     ]).then(([caseResult, userResult]) => {
       if (caseResult.error) setError(caseResult.error.message);
       else setItem(caseResult.data as CaseRow | null);
       setUser(userResult.data.user ?? null);
     });
-  }, [params.slug]);
+  }, [slug]);
 
   const total = useMemo(() => (item?.for_votes ?? 0) + (item?.against_votes ?? 0), [item]);
   const liveVerdict = useMemo(() => {
