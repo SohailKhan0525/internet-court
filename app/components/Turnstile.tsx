@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
@@ -26,11 +26,11 @@ type TurnstileProps = {
 
 export default function Turnstile({ onToken, onError }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const widgetId = useRef<string>();
+  const widgetId = useRef<string | null>(null);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-  useEffect(() => {
-    if (!siteKey || !containerRef.current || !window.turnstile) return;
+  const renderWidget = useCallback(() => {
+    if (!siteKey || !containerRef.current || !window.turnstile || widgetId.current !== null) return;
     widgetId.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
       appearance: 'interaction-only',
@@ -42,12 +42,16 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
         onError?.();
       },
     });
+  }, [siteKey, onToken, onError]);
+
+  useEffect(() => {
+    renderWidget();
 
     return () => {
-      if (widgetId.current) window.turnstile?.reset(widgetId.current);
-      widgetId.current = undefined;
+      if (widgetId.current !== null) window.turnstile?.reset(widgetId.current);
+      widgetId.current = null;
     };
-  }, [siteKey, onToken, onError]);
+  }, [renderWidget]);
 
   if (!siteKey) return null;
 
@@ -56,20 +60,7 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js"
         strategy="afterInteractive"
-        onLoad={() => {
-          if (!containerRef.current || !window.turnstile || widgetId.current) return;
-          widgetId.current = window.turnstile.render(containerRef.current, {
-            sitekey: siteKey,
-            appearance: 'interaction-only',
-            theme: 'auto',
-            callback: onToken,
-            'expired-callback': () => onToken(''),
-            'error-callback': () => {
-              onToken('');
-              onError?.();
-            },
-          });
-        }}
+        onLoad={renderWidget}
       />
       <div ref={containerRef} aria-label="Security verification" />
     </>
