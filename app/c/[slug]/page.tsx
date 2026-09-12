@@ -113,8 +113,13 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
 
   async function share() {
     const url = window.location.href;
-    if (navigator.share) await navigator.share({ title: item?.title ?? 'Internet Court case', url });
-    else await navigator.clipboard.writeText(url);
+    try {
+      if (navigator.share) await navigator.share({ title: item?.title ?? 'Internet Court case', url });
+      else await navigator.clipboard.writeText(url);
+    } catch (shareError) {
+      if (shareError instanceof DOMException && shareError.name === 'AbortError') return;
+      setError('We could not share this case. Please copy the URL from your browser.');
+    }
   }
 
   async function submitReport() {
@@ -127,7 +132,11 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     if (!item) return;
     setReporting(true);
     const supabase = getSupabase();
-    const { error: reportError } = await supabase.from('reports').insert({ case_id: item.id, reporter_id: user.id, reason: reportReason, details: reportDetails.trim() || null });
+    const { error: reportError } = await supabase.rpc('submit_report', {
+      p_case_id: item.id,
+      p_reason: reportReason,
+      p_details: reportDetails.trim() || null,
+    });
     if (reportError) setReportStatus(reportError.message);
     else { setReportStatus('Report submitted.'); setReportDetails(''); }
     setReporting(false);
@@ -149,7 +158,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       <section className="section">
         <span className="eyebrow">CASE {item.slug}</span>
         <h1 className="section-title">{item.title}</h1>
-        {profile?.username && <p>Filed by <a href={`/u/${profile.username}`}>{profile.display_name || profile.username}</a></p>}
+        {profile?.username && <p>Filed by {profile.display_name || profile.username}</p>}
         <article className="card case-argument"><p>{item.argument}</p></article>
         <div className="grid vote-grid">
           <button className="button" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button>
