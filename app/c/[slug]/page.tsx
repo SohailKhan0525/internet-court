@@ -1,7 +1,8 @@
 'use client';
 
-import { FormEvent, use, useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
+import AuthModal from '../../components/AuthModal';
 
 type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
@@ -22,9 +23,6 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
   const [reportDetails, setReportDetails] = useState('');
   const [reportStatus, setReportStatus] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [authMessage, setAuthMessage] = useState('');
-  const [authError, setAuthError] = useState('');
   const [pendingVote, setPendingVote] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -69,19 +67,6 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     return item.for_votes > item.against_votes ? 'The jury sides with you.' : 'The jury sides against you.';
   }, [item, total]);
 
-  async function sendMagicLink(event: FormEvent) {
-    event.preventDefault();
-    setAuthError('');
-    setAuthMessage('');
-    const supabase = getSupabase();
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.href },
-    });
-    if (signInError) setAuthError(signInError.message);
-    else setAuthMessage('Check your email for the sign in link. You will return to this case.');
-  }
-
   async function submitVote(choice: boolean) {
     if (!item) return;
     setError('');
@@ -103,8 +88,6 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     setError('');
     if (!user) {
       setPendingVote(choice);
-      setAuthError('');
-      setAuthMessage('');
       setAuthOpen(true);
       return;
     }
@@ -131,12 +114,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     }
     if (!item) return;
     setReporting(true);
-    const supabase = getSupabase();
-    const { error: reportError } = await supabase.rpc('submit_report', {
-      p_case_id: item.id,
-      p_reason: reportReason,
-      p_details: reportDetails.trim() || null,
-    });
+    const { error: reportError } = await getSupabase().rpc('submit_report', { p_case_id: item.id, p_reason: reportReason, p_details: reportDetails.trim() || null });
     if (reportError) setReportStatus(reportError.message);
     else { setReportStatus('Report submitted.'); setReportDetails(''); }
     setReporting(false);
@@ -148,56 +126,19 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
 
   return (
     <main className="site">
-      <header className="nav">
-        <a className="brand" href="/">INTERNET COURT</a>
-        <div className="nav-actions">
-          {!user && <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}
-          <a className="button ghost" href="/">Start your own case</a>
-        </div>
-      </header>
-      <section className="section">
+      <header className="nav"><a className="brand" href="/">INTERNET COURT</a><div className="nav-actions">{!user && <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}<a className="button ghost" href="/">Start your own case</a></div></header>
+      <section className="section section-shell">
         <span className="eyebrow">CASE {item.slug}</span>
         <h1 className="section-title">{item.title}</h1>
         {profile?.username && <p>Filed by {profile.display_name || profile.username}</p>}
         <article className="card case-argument"><p>{item.argument}</p></article>
-        <div className="grid vote-grid">
-          <button className="button" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button>
-          <button className="button secondary" disabled={voting || voted !== null} onClick={() => vote(false)}>I disagree</button>
-        </div>
+        <div className="grid vote-grid"><button className="button" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button><button className="button secondary" disabled={voting || voted !== null} onClick={() => vote(false)}>I disagree</button></div>
         {!user && <p className="muted">Sign in is required to cast a vote. Your vote is counted once.</p>}
         {error && <p className="error" role="alert">{error}</p>}
-        <article className="card verdict-card">
-          <span className="eyebrow">THE VERDICT</span>
-          <h2>{verdict || liveVerdict}</h2>
-          <p>{total} {total === 1 ? 'vote' : 'votes'} · {item.for_votes} for · {item.against_votes} against</p>
-          {voted !== null && <p className="success">Your vote is recorded.</p>}
-          <button className="button ghost" onClick={share}>Share this case</button>
-        </article>
-        <details className="report-panel">
-          <summary>Report this case</summary>
-          <div className="card report-card">
-            <label>Reason<select value={reportReason} onChange={(e) => setReportReason(e.target.value as (typeof reasons)[number])}>{reasons.map((reason) => <option key={reason} value={reason}>{reason.replace('_', ' ')}</option>)}</select></label>
-            <label className="report-details">Details<textarea value={reportDetails} maxLength={2000} onChange={(e) => setReportDetails(e.target.value)} /></label>
-            <button className="button secondary" disabled={reporting} onClick={submitReport}>{reporting ? 'Submitting…' : 'Submit report'}</button>
-            {reportStatus && <p>{reportStatus}</p>}
-          </div>
-        </details>
+        <article className="card verdict-card"><span className="eyebrow">THE VERDICT</span><h2>{verdict || liveVerdict}</h2><p>{total} {total === 1 ? 'vote' : 'votes'} · {item.for_votes} for · {item.against_votes} against</p>{voted !== null && <p className="success">Your vote is recorded.</p>}<button className="button ghost" onClick={share}>Share this case</button></article>
+        <details className="report-panel"><summary>Report this case</summary><div className="card report-card"><label>Reason<select value={reportReason} onChange={(event) => setReportReason(event.target.value as (typeof reasons)[number])}>{reasons.map((reason) => <option key={reason} value={reason}>{reason.replace('_', ' ')}</option>)}</select></label><label className="report-details">Details<textarea value={reportDetails} maxLength={2000} onChange={(event) => setReportDetails(event.target.value)} /></label><button className="button secondary" disabled={reporting} onClick={submitReport}>{reporting ? 'Submitting…' : 'Submit report'}</button>{reportStatus && <p>{reportStatus}</p>}</div></details>
       </section>
-      {authOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setAuthOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="case-auth-title">
-            <button className="modal-close" aria-label="Close sign in" onClick={() => setAuthOpen(false)}>×</button>
-            <h2 id="case-auth-title">Enter the court</h2>
-            <p>Sign in with a magic link. We will bring you back to this case.</p>
-            <form onSubmit={sendMagicLink}>
-              <div className="field"><label htmlFor="case-email">Email</label><input id="case-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
-              {authError && <div className="error" role="alert">{authError}</div>}
-              {authMessage && <div className="success">{authMessage}</div>}
-              <button className="button" type="submit">Email me a sign in link</button>
-            </form>
-          </div>
-        </div>
-      )}
+      <AuthModal open={authOpen} nextPath={`/c/${slug}`} onClose={() => setAuthOpen(false)} />
     </main>
   );
 }
