@@ -44,6 +44,11 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'error') setAuthError('That sign in link could not be completed. Please request a new one.');
+  }, []);
+
   const handleTurnstileToken = useCallback((token: string) => {
     setTurnstileToken(token);
     if (!token) setCaseError('Security verification expired. Please complete it again.');
@@ -59,7 +64,7 @@ export default function Home() {
     setAuthError('');
     setAuthMessage('');
     const supabase = getSupabase();
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: window.location.origin } });
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
     if (error) setAuthError(error.message);
     else setAuthMessage('Check your email for the sign in link.');
   }
@@ -102,29 +107,14 @@ export default function Home() {
           <p>Put your argument on trial. Let strangers vote. Get a verdict worth sending to the group chat.</p>
           <div className="hero-actions"><button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button><a className="button secondary" href="#how">See how it works</a></div>
         </section>
-
         <section className="reveal" aria-label="Tagline reveal">
-          <div ref={taglineRef} className="reveal-card">
-            <p className="tagline-reveal">
-              {taglineWords.map((word, index) => <span className={taglineVisible ? 'tagline-word is-active' : 'tagline-word'} style={{ transitionDelay: `${index * 70}ms` }} key={`${word}-${index}`}>{word}{index < taglineWords.length - 1 ? ' ' : ''}</span>)}
-            </p>
-          </div>
+          <div ref={taglineRef} className="reveal-card"><p className="tagline-reveal">{taglineWords.map((word, index) => <span className={taglineVisible ? 'tagline-word is-active' : 'tagline-word'} style={{ transitionDelay: `${index * 70}ms` }} key={`${word}-${index}`}>{word}{index < taglineWords.length - 1 ? ' ' : ''}</span>)}</p></div>
         </section>
-
-        <section className="section" id="how">
-          <span className="eyebrow">How it works</span>
-          <h2 className="section-title">The court is simple.</h2>
-          <div className="grid"><article className="card"><h3>Make your case</h3><p>State what happened and what you think the internet should decide.</p></article><article className="card"><h3>Call the jury</h3><p>Share the permanent case link. Real people choose for or against.</p></article><article className="card"><h3>Get the verdict</h3><p>The result comes from real votes. No seeded consensus. No fake social proof.</p></article></div>
-        </section>
-
+        <section className="section" id="how"><span className="eyebrow">How it works</span><h2 className="section-title">The court is simple.</h2><div className="grid"><article className="card"><h3>Make your case</h3><p>State what happened and what you think the internet should decide.</p></article><article className="card"><h3>Call the jury</h3><p>Share the permanent case link. Real people choose for or against.</p></article><article className="card"><h3>Get the verdict</h3><p>The result comes from real votes. No seeded consensus. No fake social proof.</p></article></div></section>
         <section className="section"><span className="eyebrow">Why it spreads</span><h2 className="section-title">Every argument becomes a thing worth sharing.</h2><div className="grid"><article className="card"><h3>One permanent link</h3><p>Send one case URL anywhere. People can open it, judge it and pass it on.</p></article><article className="card"><h3>A real verdict</h3><p>The verdict is calculated from actual votes stored by the court.</p></article><article className="card"><h3>More cases follow</h3><p>After judging one argument, anyone can bring their own question to the court.</p></article></div></section>
-
         <section className="section"><span className="eyebrow">Membership</span><h2 className="section-title">Keep the jury free. Pay for more control.</h2><div className="card"><p>Free users can create public cases and vote. Membership adds private and unlisted cases and membership identity.</p><div className="hero-actions"><a className="button" href="/pricing">See membership</a></div></div></section>
-
         <section className="section"><span className="eyebrow">The rules</span><h2 className="section-title">A court needs boundaries.</h2><div className="grid"><article className="card"><h3>Vote once</h3><p>Authenticated voting and server side checks keep the result tied to real accounts.</p></article><article className="card"><h3>Report abuse</h3><p>Cases can be reported for harassment, threats, personal data, hate, spam and other abuse.</p></article><article className="card"><h3>No fake proof</h3><p>We do not manufacture votes, users, testimonials or popularity claims.</p></article></div></section>
-
         <section className="section"><span className="eyebrow">FAQ</span><div className="faq"><details className="card"><summary>Do I need an account?</summary><p>You can read and share public cases without one. You need to sign in to vote or create a case.</p></details><details className="card"><summary>How is the verdict decided?</summary><p>The verdict is based on the stored for and against vote totals. There is no hidden consensus score.</p></details><details className="card"><summary>Can I remove a case?</summary><p>Case visibility and moderation rules depend on the case state. Reported content can be reviewed and removed when necessary.</p></details></div></section>
-
         <section className="section final-cta"><h2 className="section-title">Bring your argument to court.</h2><p>Make the claim. Share the link. Find out what the jury thinks.</p><button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button></section>
       </main>
       <footer className="footer"><span>Internet Court</span><span><a href="/pricing">Membership</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span></footer>
