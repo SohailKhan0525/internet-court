@@ -69,7 +69,10 @@ Deno.serve(async (req) => {
     if (!inserted) return json({ ok: true, duplicate: true });
 
     const resource = event.resource ?? {};
-    const subscriptionId = resource.id ?? resource.billing_agreement_id ?? resource.subscription_id;
+    // Payment sale events identify the subscription through billing_agreement_id.
+    // Subscription lifecycle events use resource.id. Prefer the agreement identifiers so
+    // a payment event cannot accidentally be stored under the sale transaction id.
+    const subscriptionId = resource.billing_agreement_id ?? resource.subscription_id ?? resource.id;
     const userId = resource.custom_id;
     const code = planCode(resource.plan_id);
     const eventStatuses: Record<string, string> = {
