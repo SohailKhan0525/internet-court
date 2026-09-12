@@ -1,7 +1,8 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { getSupabase } from '../lib/supabase';
+import Turnstile from './components/Turnstile';
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -14,6 +15,7 @@ export default function Home() {
   const [argument, setArgument] = useState('');
   const [caseError, setCaseError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -23,6 +25,16 @@ export default function Home() {
       if (session?.user) setAuthOpen(false);
     });
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+    if (!token) setCaseError('Security verification expired. Please complete it again.');
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken('');
+    setCaseError('Security verification could not be completed. Please try again.');
   }, []);
 
   async function sendMagicLink(event: FormEvent) {
@@ -41,13 +53,21 @@ export default function Home() {
     if (!user) return setAuthOpen(true);
     if (title.trim().length < 5) return setCaseError('Give the case a title of at least 5 characters.');
     if (argument.trim().length < 20) return setCaseError('Make the argument at least 20 characters so the jury has something real to judge.');
+    if (!turnstileToken) return setCaseError('Complete the security verification before opening your case.');
     setCreating(true);
     const supabase = getSupabase();
-    const { data, error } = await supabase.rpc('create_case', { p_title: title.trim(), p_argument: argument.trim(), p_visibility: 'public' });
+    const { data, error } = await supabase.functions.invoke('create-case', {
+      body: {
+        title: title.trim(),
+        argument: argument.trim(),
+        visibility: 'public',
+        turnstile_token: turnstileToken,
+      },
+    });
     setCreating(false);
     if (error) return setCaseError(error.message);
-    const created = Array.isArray(data) ? data[0] : data;
-    if (!created?.slug) return setCaseError('The case was not returned by the database.');
+    const created = Array.isArray(data?.case) ? data.case[0] : data?.case;
+    if (!created?.slug) return setCaseError('The case was not returned by the server.');
     window.location.href = `/c/${created.slug}`;
   }
 
@@ -73,7 +93,7 @@ export default function Home() {
       </main>
       <footer className="footer"><span>Internet Court</span><span><a href="/pricing">Membership</a> · Real users. Real votes. Real verdicts.</span></footer>
       {authOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setAuthOpen(false)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><h2 id="auth-title">Enter the court</h2><p>Use a magic link. No password to remember.</p><form onSubmit={sendMagicLink}><div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>{authError && <div className="error">{authError}</div>}{authMessage && <div className="success">{authMessage}</div>}<button className="button" type="submit">Email me a sign in link</button></form></div></div>}
-      {caseOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setCaseOpen(false)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="case-title"><h2 id="case-title">Make your case</h2><p>The jury only gets what you put here. Keep it clear, specific and human.</p><form onSubmit={createCase}><div className="field"><label htmlFor="title">Case title</label><input id="title" maxLength={160} required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Was I wrong to leave the group chat?" /></div><div className="field"><label htmlFor="argument">Your argument</label><textarea id="argument" maxLength={5000} required value={argument} onChange={(e) => setArgument(e.target.value)} placeholder="Tell the jury what happened and what you think the verdict should be." /></div>{caseError && <div className="error">{caseError}</div>}<button className="button" disabled={creating} type="submit">{creating ? 'Opening case…' : 'Open case'}</button></form></div></div>}
+      {caseOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setCaseOpen(false)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="case-title"><h2 id="case-title">Make your case</h2><p>The jury only gets what you put here. Keep it clear, specific and human.</p><form onSubmit={createCase}><div className="field"><label htmlFor="title">Case title</label><input id="title" maxLength={160} required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Was I wrong to leave the group chat?" /></div><div className="field"><label htmlFor="argument">Your argument</label><textarea id="argument" maxLength={5000} required value={argument} onChange={(e) => setArgument(e.target.value)} placeholder="Tell the jury what happened and what you think the verdict should be." /></div><Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />{caseError && <div className="error">{caseError}</div>}<button className="button" disabled={creating || !turnstileToken} type="submit">{creating ? 'Opening case…' : 'Open case'}</button></form></div></div>}
     </div>
   );
 }
