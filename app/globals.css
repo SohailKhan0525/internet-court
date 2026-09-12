@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 :root{color-scheme:light}
 html{background:#f3eee2;color:#171511;scroll-behavior:smooth}
-body{margin:0;background:#f3eee2;color:#171511;font-family:Geist,ui-sans-serif,system-ui,sans-serif}
+body{margin:0;background:#f3eee2;color:#171511;font-family:var(--font-manrope),ui-sans-serif,system-ui,sans-serif}
 button,input,textarea,select{font:inherit}
 button{appearance:none}
 a{color:inherit;text-decoration:none}
