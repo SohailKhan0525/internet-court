@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '../../../lib/supabase/server';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -7,15 +7,14 @@ export async function GET(request: Request) {
   const next = url.searchParams.get('next');
   const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
 
-  if (!code) return NextResponse.redirect(new URL('/?auth=error', request.url));
+  if (!code) return NextResponse.redirect(new URL('/auth/auth-code-error', request.url));
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
-
+  const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(new URL('/?auth=error', request.url));
 
-  return NextResponse.redirect(new URL(safeNext, request.url));
+  if (error) return NextResponse.redirect(new URL('/auth/auth-code-error', request.url));
+
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const origin = forwardedHost ? `https://${forwardedHost}` : url.origin;
+  return NextResponse.redirect(`${origin}${safeNext}`);
 }
