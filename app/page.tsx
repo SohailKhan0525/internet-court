@@ -1,7 +1,8 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase';
+import AuthModal from './components/AuthModal';
 import Turnstile from './components/Turnstile';
 
 const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'makes', 'the', 'call.'];
@@ -9,8 +10,6 @@ const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'mak
 export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [authMessage, setAuthMessage] = useState('');
   const [authError, setAuthError] = useState('');
   const [caseOpen, setCaseOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -23,12 +22,23 @@ export default function Home() {
 
   useEffect(() => {
     const supabase = getSupabase();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (error) setAuthError(error.message);
+      setUser(data.user ?? null);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) setAuthOpen(false);
+      if (session?.user) {
+        setAuthOpen(false);
+        setAuthError('');
+      }
     });
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'error') setAuthError('That sign in could not be completed. Please try again.');
   }, []);
 
   useEffect(() => {
@@ -44,11 +54,6 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('auth') === 'error') setAuthError('That sign in link could not be completed. Please request a new one.');
-  }, []);
-
   const handleTurnstileToken = useCallback((token: string) => {
     setTurnstileToken(token);
     if (!token) setCaseError('Security verification expired. Please complete it again.');
@@ -59,20 +64,7 @@ export default function Home() {
     setCaseError('Security verification could not be completed. Please try again.');
   }, []);
 
-  async function sendMagicLink(event: FormEvent) {
-    event.preventDefault();
-    setAuthError('');
-    setAuthMessage('');
-    const supabase = getSupabase();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setAuthError(error.message);
-    else setAuthMessage('Check your email for the sign in link.');
-  }
-
-  async function createCase(event: FormEvent) {
+  async function createCase(event: React.FormEvent) {
     event.preventDefault();
     setCaseError('');
     if (!user) return setAuthOpen(true);
@@ -92,8 +84,9 @@ export default function Home() {
   }
 
   async function signOut() {
-    await getSupabase().auth.signOut();
-    setUser(null);
+    const { error } = await getSupabase().auth.signOut();
+    if (error) setAuthError(error.message);
+    else setUser(null);
   }
 
   return (
@@ -118,6 +111,7 @@ export default function Home() {
               <button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button>
               <a className="button secondary" href="#how">See how it works</a>
             </div>
+            {authError && <p className="error" role="alert">{authError}</p>}
             <p className="proof-line">Real votes. Permanent case links. No fake consensus.</p>
           </div>
 
@@ -150,11 +144,7 @@ export default function Home() {
         </section>
 
         <section className="section section-shell" id="how">
-          <div className="section-heading">
-            <span className="eyebrow">How it works</span>
-            <h2 className="section-title">The court is simple.</h2>
-            <p>One clear argument. One shareable case. A verdict made from the people who actually showed up.</p>
-          </div>
+          <div className="section-heading"><span className="eyebrow">How it works</span><h2 className="section-title">The court is simple.</h2><p>One clear argument. One shareable case. A verdict made from the people who actually showed up.</p></div>
           <div className="grid">
             <article className="card"><span className="step">01</span><h3>Make your case</h3><p>State what happened and what you think the internet should decide.</p></article>
             <article className="card"><span className="step">02</span><h3>Call the jury</h3><p>Share the permanent case link. Real people choose for or against.</p></article>
@@ -162,101 +152,22 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section section-shell">
-          <div className="section-heading">
-            <span className="eyebrow">Why it spreads</span>
-            <h2 className="section-title">Every argument becomes a thing worth sharing.</h2>
-          </div>
-          <div className="grid benefits-grid">
-            <article className="card"><h3>One permanent link</h3><p>Send one case URL anywhere. People can open it, judge it and pass it on.</p></article>
-            <article className="card"><h3>A real verdict</h3><p>The verdict is calculated from actual votes stored by the court.</p></article>
-            <article className="card"><h3>A reason to return</h3><p>After judging one argument, anyone can bring their own question to the court.</p></article>
-          </div>
-        </section>
+        <section className="section section-shell"><div className="section-heading"><span className="eyebrow">Why it spreads</span><h2 className="section-title">Every argument becomes a thing worth sharing.</h2></div><div className="grid benefits-grid"><article className="card"><h3>One permanent link</h3><p>Send one case URL anywhere. People can open it, judge it and pass it on.</p></article><article className="card"><h3>A real verdict</h3><p>The verdict is calculated from actual votes stored by the court.</p></article><article className="card"><h3>A reason to return</h3><p>After judging one argument, anyone can bring their own question to the court.</p></article></div></section>
 
-        <section className="section section-shell membership-panel">
-          <div className="section-heading">
-            <span className="eyebrow">Membership</span>
-            <h2 className="section-title">Keep the jury free. Pay for more control.</h2>
-            <p>Free users can create public cases and vote. Membership adds private and unlisted cases and membership identity.</p>
-          </div>
-          <a className="button" href="/pricing">See membership</a>
-        </section>
+        <section className="section section-shell membership-panel"><div className="section-heading"><span className="eyebrow">Membership</span><h2 className="section-title">Keep the jury free. Pay for more control.</h2><p>Free users can create public cases and vote. Membership adds private and unlisted cases and membership identity.</p></div><a className="button" href="/pricing">See membership</a></section>
 
-        <section className="section section-shell">
-          <div className="section-heading">
-            <span className="eyebrow">The rules</span>
-            <h2 className="section-title">A court needs boundaries.</h2>
-          </div>
-          <div className="grid">
-            <article className="card"><h3>Vote once</h3><p>Authenticated voting and server side checks keep the result tied to real accounts.</p></article>
-            <article className="card"><h3>Report abuse</h3><p>Cases can be reported for harassment, threats, personal data, hate, spam and other abuse.</p></article>
-            <article className="card"><h3>No fake proof</h3><p>We do not manufacture votes, users, testimonials or popularity claims.</p></article>
-          </div>
-        </section>
+        <section className="section section-shell"><div className="section-heading"><span className="eyebrow">The rules</span><h2 className="section-title">A court needs boundaries.</h2></div><div className="grid"><article className="card"><h3>Vote once</h3><p>Authenticated voting and server side checks keep the result tied to real accounts.</p></article><article className="card"><h3>Report abuse</h3><p>Cases can be reported for harassment, threats, personal data, hate, spam and other abuse.</p></article><article className="card"><h3>No fake proof</h3><p>We do not manufacture votes, users, testimonials or popularity claims.</p></article></div></section>
 
-        <section className="section section-shell">
-          <div className="section-heading">
-            <span className="eyebrow">FAQ</span>
-            <h2 className="section-title">Questions people actually ask.</h2>
-          </div>
-          <div className="faq">
-            <details className="card"><summary>Can anyone read a public case?</summary><p>Yes. Public cases are designed to be opened and shared by anyone. You only need to sign in when you want to vote or create a case.</p></details>
-            <details className="card"><summary>How is the verdict decided?</summary><p>The verdict is based on the stored for and against vote totals. There is no hidden consensus score.</p></details>
-            <details className="card"><summary>Do I need a password?</summary><p>No. Internet Court uses a magic link so you can sign in without remembering another password.</p></details>
-            <details className="card"><summary>Can I report a case?</summary><p>Yes. Every public case has a reporting path for abuse such as harassment, threats, personal data, hate and spam.</p></details>
-            <details className="card"><summary>Is starting a case free?</summary><p>Public cases are free to start. Membership is for people who want more control over their cases and identity.</p></details>
-            <details className="card"><summary>Does Internet Court use fake votes?</summary><p>No. The product is built around real authenticated votes and server side checks.</p></details>
-          </div>
-        </section>
+        <section className="section section-shell"><div className="section-heading"><span className="eyebrow">FAQ</span><h2 className="section-title">Questions people actually ask.</h2></div><div className="faq"><details className="card"><summary>Can anyone read a public case?</summary><p>Yes. Public cases are designed to be opened and shared by anyone. You only need to sign in when you want to vote or create a case.</p></details><details className="card"><summary>How is the verdict decided?</summary><p>The verdict is based on the stored for and against vote totals. There is no hidden consensus score.</p></details><details className="card"><summary>Do I need a password?</summary><p>No. Internet Court uses a magic link or Google sign in so you can enter without remembering another password.</p></details><details className="card"><summary>Can I report a case?</summary><p>Yes. Every public case has a reporting path for abuse such as harassment, threats, personal data, hate and spam.</p></details><details className="card"><summary>Is starting a case free?</summary><p>Public cases are free to start. Membership is for people who want more control over their cases and identity.</p></details><details className="card"><summary>Does Internet Court use fake votes?</summary><p>No. The product is built around real authenticated votes and server side checks.</p></details></div></section>
 
-        <section className="section section-shell final-cta">
-          <div>
-            <span className="eyebrow">Ready for judgment</span>
-            <h2 className="section-title">Bring your argument to court.</h2>
-            <p>Make the claim. Share the link. Find out what the jury thinks.</p>
-          </div>
-          <button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button>
-        </section>
+        <section className="section section-shell final-cta"><div><span className="eyebrow">Ready for judgment</span><h2 className="section-title">Bring your argument to court.</h2><p>Make the claim. Share the link. Find out what the jury thinks.</p></div><button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button></section>
       </main>
 
-      <footer className="footer section-shell">
-        <span>Internet Court</span>
-        <span><a href="/pricing">Membership</a><span className="footer-dot">·</span><a href="/privacy">Privacy</a><span className="footer-dot">·</span><a href="/terms">Terms</a></span>
-      </footer>
+      <footer className="footer section-shell"><span>Internet Court</span><span><a href="/pricing">Membership</a><span className="footer-dot">·</span><a href="/privacy">Privacy</a><span className="footer-dot">·</span><a href="/terms">Terms</a></span></footer>
 
-      {authOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setAuthOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-            <button className="modal-close" aria-label="Close sign in" onClick={() => setAuthOpen(false)}>Close</button>
-            <h2 id="auth-title">Enter the court</h2>
-            <p>Use a magic link. No password to remember.</p>
-            <form onSubmit={sendMagicLink}>
-              <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
-              {authError && <div className="error" role="alert">{authError}</div>}
-              {authMessage && <div className="success">{authMessage}</div>}
-              <button className="button" type="submit">Email me a sign in link</button>
-            </form>
-          </div>
-        </div>
-      )}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
-      {caseOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.currentTarget === e.target && setCaseOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="case-title">
-            <button className="modal-close" aria-label="Close case form" onClick={() => setCaseOpen(false)}>Close</button>
-            <h2 id="case-title">Make your case</h2>
-            <p>The jury only gets what you put here. Keep it clear, specific and human.</p>
-            <form onSubmit={createCase}>
-              <div className="field"><label htmlFor="title">Case title</label><input id="title" maxLength={160} required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Was I wrong to leave the group chat?" /></div>
-              <div className="field"><label htmlFor="argument">Your argument</label><textarea id="argument" maxLength={5000} required value={argument} onChange={(e) => setArgument(e.target.value)} placeholder="Tell the jury what happened and what you think the verdict should be." /></div>
-              <Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />
-              {caseError && <div className="error" role="alert">{caseError}</div>}
-              <button className="button" disabled={creating || !turnstileToken} type="submit">{creating ? 'Opening case' : 'Open case'}</button>
-            </form>
-          </div>
-        </div>
-      )}
+      {caseOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && setCaseOpen(false)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="case-title"><button className="modal-close" aria-label="Close case form" onClick={() => setCaseOpen(false)}>Close</button><h2 id="case-title">Make your case</h2><p>The jury only gets what you put here. Keep it clear, specific and human.</p><form onSubmit={createCase}><div className="field"><label htmlFor="title">Case title</label><input id="title" maxLength={160} required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Was I wrong to leave the group chat?" /></div><div className="field"><label htmlFor="argument">Your argument</label><textarea id="argument" maxLength={5000} required value={argument} onChange={(event) => setArgument(event.target.value)} placeholder="Tell the jury what happened and what you think the verdict should be." /></div><Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />{caseError && <div className="error" role="alert">{caseError}</div>}<button className="button" disabled={creating || !turnstileToken} type="submit">{creating ? 'Opening case' : 'Open case'}</button></form></div></div>}
     </div>
   );
 }
