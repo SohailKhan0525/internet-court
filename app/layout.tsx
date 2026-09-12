@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 
+const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' });
 const siteUrl = 'https://loopproof.me';
 
 export const metadata: Metadata = {
@@ -25,7 +27,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>
+      <body className={manrope.variable}>
         <a className="skip-link" href="#main">Skip to content</a>
         {children}
       </body>
