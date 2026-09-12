@@ -18,7 +18,7 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
   if (!open) return null;
 
   function callbackUrl() {
-    const callback = new URL('/auth/callback', window.location.origin);
+    const callback = new URL('/auth/callback', process.env.NEXT_PUBLIC_SITE_URL || window.location.origin);
     const safePath = nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/';
     callback.searchParams.set('next', safePath);
     return callback.toString();
