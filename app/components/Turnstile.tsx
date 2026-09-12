@@ -34,7 +34,7 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
     widgetId.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
       appearance: 'interaction-only',
-      theme: 'auto',
+      theme: 'light',
       callback: onToken,
       'expired-callback': () => onToken(''),
       'error-callback': () => {
@@ -46,7 +46,6 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
 
   useEffect(() => {
     renderWidget();
-
     return () => {
       if (widgetId.current !== null) window.turnstile?.reset(widgetId.current);
       widgetId.current = null;
@@ -57,11 +56,7 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
 
   return (
     <>
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="afterInteractive"
-        onLoad={renderWidget}
-      />
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={renderWidget} />
       <div ref={containerRef} aria-label="Security verification" />
     </>
   );
