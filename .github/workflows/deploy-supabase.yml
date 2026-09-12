@@ -1,0 +1,32 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/create-case/**"
+      - "supabase/functions/create-paypal-subscription/**"
+      - "supabase/functions/paypal-webhook/**"
+      - ".github/workflows/deploy-supabase.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        function:
+          - create-case
+          - create-paypal-subscription
+          - paypal-webhook
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy ${{ matrix.function }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy ${{ matrix.function }} --use-api --project-ref rscjtmzcwsctifggipwj
