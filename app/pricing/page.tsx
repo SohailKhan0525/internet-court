@@ -65,21 +65,21 @@ export default function PricingPage() {
         <a className="button ghost" href="/">Back</a>
       </header>
       <main id="main">
-        <section className="section" style={{ paddingTop: 80 }}>
+        <section className="section section-shell pricing-hero">
           <span className="eyebrow">Membership</span>
-          <h1 className="section-title" style={{ fontSize: 'clamp(48px, 8vw, 80px)', marginBottom: 24 }}>Choose your seat in the court.</h1>
-          <p style={{ maxWidth: 680, color: '#a3a3a3', fontSize: 20, lineHeight: 1.55 }}>The jury stays open to everyone. Membership unlocks private and unlisted cases and identifies paid members on the court.</p>
+          <h1 className="section-title">Choose your seat in the court.</h1>
+          <p className="muted" style={{ maxWidth: 680, fontSize: 18 }}>The jury stays open to everyone. Membership unlocks private and unlisted cases and identifies paid members on the court.</p>
         </section>
-        <section className="section" aria-label="Subscription plans">
-          <div className="grid">
+        <section className="section section-shell" aria-label="Subscription plans">
+          <div className="grid pricing-grid">
             {plans.map((plan) => (
-              <article className="card" key={plan.code} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <article className="card" key={plan.code}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 28, textWrap: 'balance' }}>{plan.name}</h2>
-                  <p style={{ marginTop: 12 }}>{plan.description}</p>
+                  <h2>{plan.name}</h2>
+                  <p className="muted" style={{ marginTop: 12 }}>{plan.description}</p>
                 </div>
-                <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: '-.04em' }}>{plan.price}<span style={{ fontSize: 16, color: '#737373' }}> / month</span></div>
-                <ul style={{ margin: 0, paddingLeft: 20, color: '#d4d4d4', lineHeight: 1.7 }}>
+                <div className="price">{plan.price}<span> / month</span></div>
+                <ul className="feature-list">
                   {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
                 </ul>
                 <button className="button" disabled={loadingPlan !== null} onClick={() => subscribe(plan.code)}>
@@ -89,7 +89,7 @@ export default function PricingPage() {
             ))}
           </div>
           {error && <div className="error" role="alert" style={{ marginTop: 24 }}>{error}</div>}
-          <p style={{ color: '#737373', marginTop: 32, fontSize: 14 }}>Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record.</p>
+          <p className="pricing-note">Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record. Subscriptions are billed monthly and can be cancelled anytime from your PayPal account; see our <a href="/terms">Terms</a> for the refund policy.</p>
         </section>
       </main>
       <footer className="footer"><span>Internet Court</span><a href="/">Return to court</a></footer>

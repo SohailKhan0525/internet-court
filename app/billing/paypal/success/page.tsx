@@ -56,11 +56,11 @@ export default function PayPalSuccessPage() {
     <div className="site">
       <header className="nav"><a className="brand" href="/">INTERNET COURT</a></header>
       <main id="main">
-        <section className="section" style={{ paddingTop: 96, maxWidth: 720 }}>
-          {status === 'checking' && <><span className="eyebrow">Payment approved</span><h1 className="section-title" style={{ fontSize: 56 }}>Confirming your membership.</h1><p style={{ color: '#a3a3a3', lineHeight: 1.6 }}>PayPal has returned you to Internet Court. We are waiting for the verified PayPal webhook before granting access.</p></>}
-          {status === 'active' && <><span className="eyebrow">Membership active</span><h1 className="section-title" style={{ fontSize: 56 }}>Welcome to the court.</h1><p style={{ color: '#a3a3a3', lineHeight: 1.6 }}>Your verified PayPal subscription is active. Your membership features are now available.</p><a className="button" href="/">Return to Internet Court</a></>}
-          {status === 'pending' && <><span className="eyebrow">Still confirming</span><h1 className="section-title" style={{ fontSize: 56 }}>Your payment is not being guessed.</h1><p style={{ color: '#a3a3a3', lineHeight: 1.6 }}>PayPal has returned you, but Internet Court has not yet received the verified subscription event. Your access will only change after that event is confirmed.</p><a className="button" href="/">Return to Internet Court</a></>}
-          {status === 'error' && <><span className="eyebrow">Could not confirm</span><h1 className="section-title" style={{ fontSize: 56 }}>We could not verify the membership yet.</h1><p style={{ color: '#a3a3a3', lineHeight: 1.6 }}>No premium access has been granted. Return to the court or try the membership flow again.</p><a className="button" href="/pricing">Back to membership</a></>}
+        <section className="section section-shell result-page">
+          {status === 'checking' && <><span className="eyebrow">Payment approved</span><h1 className="section-title">Confirming your membership.</h1><p>PayPal has returned you to Internet Court. We are waiting for the verified PayPal webhook before granting access.</p></>}
+          {status === 'active' && <><span className="eyebrow">Membership active</span><h1 className="section-title">Welcome to the court.</h1><p>Your verified PayPal subscription is active. Your membership features are now available.</p><a className="button" href="/">Return to Internet Court</a></>}
+          {status === 'pending' && <><span className="eyebrow">Still confirming</span><h1 className="section-title">Your payment is not being guessed.</h1><p>PayPal has returned you, but Internet Court has not yet received the verified subscription event. Your access will only change after that event is confirmed.</p><a className="button" href="/">Return to Internet Court</a></>}
+          {status === 'error' && <><span className="eyebrow">Could not confirm</span><h1 className="section-title">We could not verify the membership yet.</h1><p>No premium access has been granted. Return to the court or try the membership flow again.</p><a className="button" href="/pricing">Back to membership</a></>}
         </section>
       </main>
     </div>
