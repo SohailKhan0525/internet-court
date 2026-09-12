@@ -20,7 +20,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   return (
     <main className="site">
       <header className="nav"><a className="brand" href="/">INTERNET COURT</a><a className="button ghost" href="/">Start a case</a></header>
-      <section className="section">
+      <section className="section section-shell">
         <div className="card">
           <p className="eyebrow">@{profile.username}</p>
           <h1 className="section-title">{profile.display_name}</h1>
