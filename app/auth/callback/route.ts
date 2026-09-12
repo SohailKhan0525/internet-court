@@ -14,7 +14,6 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.redirect(new URL('/auth/auth-code-error', request.url));
 
-  const forwardedHost = request.headers.get('x-forwarded-host');
-  const origin = forwardedHost ? `https://${forwardedHost}` : url.origin;
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
   return NextResponse.redirect(`${origin}${safeNext}`);
 }
