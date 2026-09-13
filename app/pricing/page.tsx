@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
+import ComparisonTable from '../components/ComparisonTable';
 
 const plans = [
   {
@@ -90,6 +91,26 @@ export default function PricingPage() {
           </div>
           {error && <div className="error" role="alert" style={{ marginTop: 24 }}>{error}</div>}
           <p className="pricing-note">Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record. Subscriptions are billed monthly and can be cancelled anytime from your PayPal account; see our <a href="/terms">Terms</a> for the refund policy.</p>
+        </section>
+        <section className="section section-shell" aria-label="Feature comparison">
+          <div className="section-heading">
+            <span className="eyebrow">Compare</span>
+            <h2 className="section-title" style={{ fontSize: 'clamp(28px,4vw,36px)' }}>What each tier actually unlocks.</h2>
+            <p>No hidden features. This is the whole list.</p>
+          </div>
+          <ComparisonTable
+            columns={['Free', 'Jury Member — $3/mo', 'Supreme Court — $7/mo']}
+            highlightColumn={2}
+            rows={[
+              { label: 'Vote on public cases', values: [true, true, true] },
+              { label: 'Create public cases', values: [true, true, true] },
+              { label: 'Create private cases', values: [false, true, true] },
+              { label: 'Create unlisted cases (link-only)', values: [false, true, true] },
+              { label: 'Membership badge on your profile', values: [false, true, true] },
+              { label: 'Supreme Court tier recognition', values: [false, false, true] },
+            ]}
+            caption="Jury Member and Supreme Court unlock the exact same private/unlisted case abilities — Supreme Court is a visible status tier on top, not extra functionality. If that's not worth $4/mo more to you, Jury Member does everything you need."
+          />
         </section>
       </main>
       <footer className="footer"><span>Internet Court</span><a href="/">Return to court</a></footer>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase';
 import AuthModal from './components/AuthModal';
 import Turnstile from './components/Turnstile';
+import ComparisonTable from './components/ComparisonTable';
 
 const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'makes', 'the', 'call.'];
 
@@ -154,6 +155,25 @@ export default function Home() {
 
         <section className="section section-shell"><div className="section-heading"><span className="eyebrow">Why it spreads</span><h2 className="section-title">Every argument becomes a thing worth sharing.</h2></div><div className="grid benefits-grid"><article className="card"><h3>One permanent link</h3><p>Send one case URL anywhere. People can open it, judge it and pass it on.</p></article><article className="card"><h3>A real verdict</h3><p>The verdict is calculated from actual votes stored by the court.</p></article><article className="card"><h3>A reason to return</h3><p>After judging one argument, anyone can bring their own question to the court.</p></article></div></section>
 
+        <section className="section section-shell" aria-label="How Internet Court compares">
+          <div className="section-heading">
+            <span className="eyebrow">The alternative</span>
+            <h2 className="section-title">You have other ways to settle this.</h2>
+            <p>Here's how they stack up.</p>
+          </div>
+          <ComparisonTable
+            columns={['Internet Court', 'Group chat', 'Reddit thread', 'Actual court']}
+            highlightColumn={0}
+            rows={[
+              { label: 'Ends with a real verdict', values: ['Yes, a number decides', 'Never. Still going.', 'Upvotes, not a verdict', 'Yes. Legally binding.'] },
+              { label: 'Costs to start', values: ['Free', 'Free', 'Free', 'Filing fees + a lawyer'] },
+              { label: 'Time to a result', values: ['Minutes', 'Eternal', 'Buried by page 2', 'Months, maybe years'] },
+              { label: 'Your mom can see it', values: ['Only if you share it', 'She\'s already in the chat', 'Anonymous, so no', 'Public record, so yes'] },
+              { label: 'Strangers judge fairly', values: ['Yes, that\'s the whole idea', 'No, everyone picks a side', 'Depends on the subreddit', 'Also yes, in theory'] },
+            ]}
+            caption="We're not replacing small claims court. We're replacing the group chat argument that never actually ends."
+          />
+        </section>
         <section className="section section-shell membership-panel"><div className="section-heading"><span className="eyebrow">Membership</span><h2 className="section-title">Keep the jury free. Pay for more control.</h2><p>Free users can create public cases and vote. Membership adds private and unlisted cases and membership identity.</p></div><a className="button" href="/pricing">See membership</a></section>
 
         <section className="section section-shell"><div className="section-heading"><span className="eyebrow">The rules</span><h2 className="section-title">A court needs boundaries.</h2></div><div className="grid"><article className="card"><h3>Vote once</h3><p>Authenticated voting and server side checks keep the result tied to real accounts.</p></article><article className="card"><h3>Report abuse</h3><p>Cases can be reported for harassment, threats, personal data, hate, spam and other abuse.</p></article><article className="card"><h3>No fake proof</h3><p>We do not manufacture votes, users, testimonials or popularity claims.</p></article></div></section>
