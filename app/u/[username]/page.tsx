@@ -19,7 +19,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   return (
     <main className="site">
-      <header className="nav"><a className="brand" href="/">INTERNET COURT</a><a className="button ghost" href="/">Start a case</a></header>
+      <header className="nav"><a className="brand" href="/">INTERNET COURT<span className="case-tagline">A public court for real arguments</span></a><a className="button ghost" href="/">Start a case</a></header>
       <section className="section section-shell">
         <div className="card">
           <p className="eyebrow">@{profile.username}</p>
@@ -27,7 +27,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           {profile.bio && <p>{profile.bio}</p>}
           <p>{publicCases.length} {publicCases.length === 1 ? 'public case' : 'public cases'}</p>
         </div>
-        <div style={{ marginTop: 32 }}>
+        <div className="mt-8">
           <h2>Cases filed</h2>
           {publicCases.length === 0 ? (
             <div className="card"><p>This profile has not published a case yet.</p></div>

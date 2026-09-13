@@ -126,12 +126,13 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
 
   return (
     <main className="site">
-      <header className="nav"><a className="brand" href="/">INTERNET COURT</a><div className="nav-actions">{!user && <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}<a className="button ghost" href="/">Start your own case</a></div></header>
+      <header className="nav"><a className="brand" href="/">INTERNET COURT<span className="case-tagline">A public court for real arguments</span></a><div className="nav-actions">{!user && <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}<a className="button ghost" href="/">Start your own case</a></div></header>
       <section className="section section-shell">
         <span className="eyebrow">CASE {item.slug}</span>
         <h1 className="section-title">{item.title}</h1>
         {profile?.username && <p>Filed by {profile.display_name || profile.username}</p>}
         <article className="card case-argument"><p>{item.argument}</p></article>
+        <p className="muted case-explainer">Read the argument above, then pick a side. The verdict below is just the real vote count — no hidden algorithm, no fake votes.</p>
         <div className="grid vote-grid"><button className="button" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button><button className="button secondary" disabled={voting || voted !== null} onClick={() => vote(false)}>I disagree</button></div>
         {!user && <p className="muted">Sign in is required to cast a vote. Your vote is counted once.</p>}
         {error && <p className="error" role="alert">{error}</p>}
