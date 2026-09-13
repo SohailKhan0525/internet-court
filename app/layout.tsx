@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Manrope } from 'next/font/google';
 import './globals.css';
+import { ToastProvider } from './components/Toast';
 
 const manrope = Manrope({ subsets: ['latin'], display: 'swap', variable: '--font-manrope' });
 const siteUrl = 'https://loopproof.me';
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={manrope.variable}>
         <a className="skip-link" href="#main">Skip to content</a>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

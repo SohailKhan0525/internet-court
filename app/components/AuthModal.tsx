@@ -1,7 +1,9 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
+import { useToast } from './Toast';
+import Turnstile from './Turnstile';
 
 type AuthModalProps = {
   open: boolean;
@@ -10,10 +12,17 @@ type AuthModalProps = {
 };
 
 export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalProps) {
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState<'provider' | 'email' | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileToken = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken('');
+    showToast('Security verification failed to load. Refresh and try again.', 'error');
+  }, [showToast]);
 
   if (!open) return null;
 
@@ -24,32 +33,61 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
     return callback.toString();
   }
 
+  async function verifyHuman(): Promise<boolean> {
+    if (!turnstileToken) {
+      showToast('Complete the security check before continuing.', 'error');
+      return false;
+    }
+    const { data, error } = await getSupabase().functions.invoke('verify-turnstile', {
+      body: { turnstile_token: turnstileToken },
+    });
+    if (error || !data?.verified) {
+      showToast('Security verification failed. Please try again.', 'error');
+      return false;
+    }
+    return true;
+  }
+
   async function signInWithProvider() {
-    setError('');
     setMessage('');
     setLoading('provider');
+    const verified = await verifyHuman();
+    if (!verified) {
+      setLoading(null);
+      return;
+    }
     const { error: signInError } = await getSupabase().auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: callbackUrl() },
     });
     if (signInError) {
       setLoading(null);
-      setError(signInError.message);
+      showToast(signInError.message, 'error');
     }
+    // On success the browser navigates away to Google immediately, so there is
+    // nothing further to render here — the redirect back to /auth/callback
+    // (and then to nextPath) is handled by the callback route.
   }
 
   async function sendMagicLink(event: FormEvent) {
     event.preventDefault();
-    setError('');
     setMessage('');
     setLoading('email');
+    const verified = await verifyHuman();
+    if (!verified) {
+      setLoading(null);
+      return;
+    }
     const { error: signInError } = await getSupabase().auth.signInWithOtp({
       email: email.trim(),
       options: { emailRedirectTo: callbackUrl() },
     });
     setLoading(null);
-    if (signInError) setError(signInError.message);
-    else setMessage('Check your email for the sign in link.');
+    if (signInError) showToast(signInError.message, 'error');
+    else {
+      setMessage('Check your email for the sign in link.');
+      showToast('Sign in link sent — check your email.', 'success');
+    }
   }
 
   return (
@@ -58,6 +96,7 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
         <button className="modal-close" aria-label="Close sign in" onClick={onClose}>Close</button>
         <h2 id="auth-title">Enter the court</h2>
         <p>Continue with Google or use a magic link. No password to remember.</p>
+        <Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />
         <button className="button provider-button" type="button" disabled={loading !== null} onClick={signInWithProvider}>
           {loading === 'provider' ? 'Opening Google' : 'Continue with Google'}
         </button>
@@ -67,7 +106,6 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
             <label htmlFor="auth-email">Email</label>
             <input id="auth-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
           </div>
-          {error && <div className="error" role="alert">{error}</div>}
           {message && <div className="success">{message}</div>}
           <button className="button secondary auth-email-button" type="submit" disabled={loading !== null}>
             {loading === 'email' ? 'Sending link' : 'Email me a sign in link'}
