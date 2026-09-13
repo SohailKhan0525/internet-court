@@ -5,10 +5,12 @@ import { getSupabase } from '../lib/supabase';
 import AuthModal from './components/AuthModal';
 import Turnstile from './components/Turnstile';
 import ComparisonTable from './components/ComparisonTable';
+import { useToast } from './components/Toast';
 
 const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'makes', 'the', 'call.'];
 
 export default function Home() {
+  const { showToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -78,7 +80,10 @@ export default function Home() {
       body: { title: title.trim(), argument: argument.trim(), visibility: 'public', turnstile_token: turnstileToken },
     });
     setCreating(false);
-    if (error) return setCaseError(error.message);
+    if (error) {
+      showToast(error.message, 'error');
+      return setCaseError(error.message);
+    }
     const created = Array.isArray(data?.case) ? data.case[0] : data?.case;
     if (!created?.slug) return setCaseError('The case was not returned by the server.');
     window.location.href = `/c/${created.slug}`;
@@ -86,8 +91,10 @@ export default function Home() {
 
   async function signOut() {
     const { error } = await getSupabase().auth.signOut();
-    if (error) setAuthError(error.message);
-    else setUser(null);
+    if (error) {
+      setAuthError(error.message);
+      showToast(error.message, 'error');
+    } else setUser(null);
   }
 
   return (
@@ -183,7 +190,7 @@ export default function Home() {
         <section className="section section-shell final-cta"><div><span className="eyebrow">Ready for judgment</span><h2 className="section-title">Bring your argument to court.</h2><p>Make the claim. Share the link. Find out what the jury thinks.</p></div><button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button></section>
       </main>
 
-      <footer className="footer section-shell"><span>Internet Court</span><span><a href="/pricing">Membership</a><span className="footer-dot">·</span><a href="/privacy">Privacy</a><span className="footer-dot">·</span><a href="/terms">Terms</a></span></footer>
+      <footer className="footer section-shell"><span>Internet Court</span><span><a href="/pricing">Membership</a><span className="footer-dot">·</span><a href="/contact">Contact</a><span className="footer-dot">·</span><a href="/privacy">Privacy</a><span className="footer-dot">·</span><a href="/terms">Terms</a></span></footer>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 

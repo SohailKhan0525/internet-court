@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
 import ComparisonTable from '../components/ComparisonTable';
+import { useToast } from '../components/Toast';
 
 const plans = [
   {
@@ -22,6 +23,7 @@ const plans = [
 ] as const;
 
 export default function PricingPage() {
+  const { showToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -52,7 +54,9 @@ export default function PricingPage() {
 
     if (invokeError || !data?.approval_url) {
       setLoadingPlan(null);
-      setError(invokeError?.message ?? 'PayPal did not return an approval link.');
+      const message = invokeError?.message ?? 'PayPal did not return an approval link.';
+      setError(message);
+      showToast(message, 'error');
       return;
     }
 

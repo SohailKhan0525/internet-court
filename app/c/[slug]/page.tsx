@@ -3,6 +3,7 @@
 import { use, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import AuthModal from '../../components/AuthModal';
+import { useToast } from '../../components/Toast';
 
 type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
@@ -11,6 +12,7 @@ const reasons = ['harassment', 'personal_data', 'threats', 'defamation', 'hate',
 
 export default function CasePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const { showToast } = useToast();
   const [item, setItem] = useState<CaseRow | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -73,8 +75,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     setVoting(true);
     const supabase = getSupabase();
     const { error: voteError } = await supabase.rpc('cast_vote', { p_case_id: item.id, p_choice: choice });
-    if (voteError) setError(voteError.message);
-    else {
+    if (voteError) {
+      setError(voteError.message);
+      showToast(voteError.message, 'error');
+    } else {
       setVoted(choice);
       const { data: refreshed } = await supabase.from('cases').select('id,slug,owner_id,title,argument,status,visibility,for_votes,against_votes,created_at').eq('id', item.id).single();
       if (refreshed) setItem(refreshed as CaseRow);
@@ -102,6 +106,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     } catch (shareError) {
       if (shareError instanceof DOMException && shareError.name === 'AbortError') return;
       setError('We could not share this case. Please copy the URL from your browser.');
+      showToast('We could not share this case. Please copy the URL from your browser.', 'error');
     }
   }
 
@@ -115,8 +120,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     if (!item) return;
     setReporting(true);
     const { error: reportError } = await getSupabase().rpc('submit_report', { p_case_id: item.id, p_reason: reportReason, p_details: reportDetails.trim() || null });
-    if (reportError) setReportStatus(reportError.message);
-    else { setReportStatus('Report submitted.'); setReportDetails(''); }
+    if (reportError) {
+      setReportStatus(reportError.message);
+      showToast(reportError.message, 'error');
+    } else { setReportStatus('Report submitted.'); setReportDetails(''); showToast('Report submitted. A moderator will review it.', 'success'); }
     setReporting(false);
   }
 

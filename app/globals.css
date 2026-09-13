@@ -20,14 +20,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .nav-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .nav-link{padding:8px 12px;border-radius:8px;color:#5d584d;font-size:14px;font-weight:600;transition:all 700ms cubic-bezier(.32,.72,0,1)}
 .nav-link:hover{background:#ebe4d6;color:#171511;transform:translateY(-2px)}
-.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #171511;border-radius:12px;padding:8px 12px;background:#171511;color:#fffdf7;font-size:16px;font-weight:600;line-height:24px;cursor:pointer;transition:all 700ms cubic-bezier(.32,.72,0,1)}
-.button:hover{transform:translateY(-2px);background:#2b2822}
-.button:active{transform:translateY(1px) scale(.98)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #171511;border-radius:12px;padding:8px 12px;background:#171511;color:#fffdf7;font-size:16px;font-weight:600;line-height:24px;cursor:pointer;transition:background-color 180ms cubic-bezier(.34,1.56,.64,1),transform 150ms cubic-bezier(.34,1.56,.64,1),box-shadow 180ms cubic-bezier(.34,1.56,.64,1),border-color 180ms cubic-bezier(.34,1.56,.64,1)}
+.button:hover{transform:translateY(-2px) scale(1.015);background:#2b2822;box-shadow:0 8px 20px -8px rgba(23,21,17,.35)}
+.button:active{transform:translateY(1px) scale(.97);transition-duration:80ms;box-shadow:none}
 .button.secondary{background:#ebe4d6;color:#171511;border-color:#d4ccbd}
-.button.secondary:hover{background:#e2d9c9}
+.button.secondary:hover{background:#e2d9c9;box-shadow:0 8px 20px -10px rgba(23,21,17,.18)}
 .button.ghost{background:transparent;color:#171511;border-color:#d4ccbd}
-.button.ghost:hover{background:#ebe4d6}
-.button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.button.ghost:hover{background:#ebe4d6;box-shadow:none}
+.button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:48px;align-items:center;padding-top:80px;padding-bottom:96px}
 .hero-copy{max-width:680px}
 .eyebrow{display:inline-block;margin-bottom:16px;color:#766f61;font-size:14px;line-height:20px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
