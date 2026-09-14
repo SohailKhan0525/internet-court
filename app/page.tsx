@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase';
+import { invokeEdgeFunction } from '../lib/functions';
 import AuthModal from './components/AuthModal';
 import Turnstile from './components/Turnstile';
 import ComparisonTable from './components/ComparisonTable';
@@ -75,18 +76,17 @@ export default function Home() {
     if (argument.trim().length < 20) return setCaseError('Make the argument at least 20 characters so the jury has something real to judge.');
     if (!turnstileToken) return setCaseError('Complete the security verification before opening your case.');
     setCreating(true);
-    const supabase = getSupabase();
-    const { data, error } = await supabase.functions.invoke('create-case', {
-      body: { title: title.trim(), argument: argument.trim(), visibility: 'public', turnstile_token: turnstileToken },
+    const { data, error } = await invokeEdgeFunction<{ case: unknown }>('create-case', {
+      title: title.trim(), argument: argument.trim(), visibility: 'public', turnstile_token: turnstileToken,
     });
     setCreating(false);
     if (error) {
-      showToast(error.message, 'error');
-      return setCaseError(error.message);
+      showToast(error, 'error');
+      return setCaseError(error);
     }
     const created = Array.isArray(data?.case) ? data.case[0] : data?.case;
-    if (!created?.slug) return setCaseError('The case was not returned by the server.');
-    window.location.href = `/c/${created.slug}`;
+    if (!(created as { slug?: string })?.slug) return setCaseError('The case was not returned by the server.');
+    window.location.href = `/c/${(created as { slug: string }).slug}`;
   }
 
   async function signOut() {

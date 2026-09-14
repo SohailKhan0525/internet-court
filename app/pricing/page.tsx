@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
+import { invokeEdgeFunction } from '../../lib/functions';
 import ComparisonTable from '../components/ComparisonTable';
 import { useToast } from '../components/Toast';
 
@@ -43,18 +44,15 @@ export default function PricingPage() {
     }
 
     setLoadingPlan(planCode);
-    const supabase = getSupabase();
-    const { data, error: invokeError } = await supabase.functions.invoke('create-paypal-subscription', {
-      body: {
-        plan_code: planCode,
-        return_url: `${window.location.origin}/billing/paypal/success?plan=${encodeURIComponent(planCode)}`,
-        cancel_url: `${window.location.origin}/billing/paypal/cancel`,
-      },
+    const { data, error: invokeError } = await invokeEdgeFunction<{ approval_url: string }>('create-paypal-subscription', {
+      plan_code: planCode,
+      return_url: `${window.location.origin}/billing/paypal/success?plan=${encodeURIComponent(planCode)}`,
+      cancel_url: `${window.location.origin}/billing/paypal/cancel`,
     });
 
     if (invokeError || !data?.approval_url) {
       setLoadingPlan(null);
-      const message = invokeError?.message ?? 'PayPal did not return an approval link.';
+      const message = invokeError ?? 'PayPal did not return an approval link.';
       setError(message);
       showToast(message, 'error');
       return;

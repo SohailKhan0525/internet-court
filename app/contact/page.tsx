@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useState } from 'react';
-import { getSupabase } from '../../lib/supabase';
+import { invokeEdgeFunction } from '../../lib/functions';
 import { useToast } from '../components/Toast';
 import Turnstile from '../components/Turnstile';
 
@@ -15,8 +15,15 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
 
-  const handleTurnstileToken = useCallback((token: string) => setTurnstileToken(token), []);
-  const handleTurnstileError = useCallback(() => setTurnstileToken(''), []);
+  const [turnstileStatus, setTurnstileStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+    setTurnstileStatus(token ? 'ready' : 'loading');
+  }, []);
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken('');
+    setTurnstileStatus('error');
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -26,12 +33,12 @@ export default function ContactPage() {
       return;
     }
     setSending(true);
-    const { data, error: invokeError } = await getSupabase().functions.invoke('send-contact-message', {
-      body: { name: name.trim(), email: email.trim(), message: message.trim(), turnstile_token: turnstileToken },
+    const { data, error: invokeError } = await invokeEdgeFunction<{ sent: boolean }>('send-contact-message', {
+      name: name.trim(), email: email.trim(), message: message.trim(), turnstile_token: turnstileToken,
     });
     setSending(false);
     if (invokeError || !data?.sent) {
-      const messageText = invokeError?.message ?? 'The message could not be sent. Please try again.';
+      const messageText = invokeError ?? 'The message could not be sent. Please try again.';
       setError(messageText);
       showToast(messageText, 'error');
       return;
@@ -68,9 +75,13 @@ export default function ContactPage() {
               <label htmlFor="contact-message">Message</label>
               <textarea id="contact-message" required maxLength={4000} value={message} onChange={(event) => setMessage(event.target.value)} />
             </div>
-            <Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />
+            <div className="turnstile-slot">
+              <Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />
+              {turnstileStatus === 'loading' && <p className="muted turnstile-status">Loading security check…</p>}
+              {turnstileStatus === 'error' && <p className="error turnstile-status" role="alert">Security check failed to load. Refresh and try again.</p>}
+            </div>
             {error && <div className="error" role="alert">{error}</div>}
-            <button className="button" type="submit" disabled={sending}>{sending ? 'Sending…' : 'Send message'}</button>
+            <button className="button" type="submit" disabled={sending || turnstileStatus !== 'ready'}>{sending ? 'Sending…' : turnstileStatus === 'ready' ? 'Send message' : 'Waiting for security check…'}</button>
           </form>
         )}
       </section>

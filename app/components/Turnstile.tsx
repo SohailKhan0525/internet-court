@@ -24,16 +24,31 @@ type TurnstileProps = {
   onError?: () => void;
 };
 
+const RENDER_TIMEOUT_MS = 10000;
+
 export default function Turnstile({ onToken, onError }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const timeoutRef = useRef<number | null>(null);
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  const clearRenderTimeout = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   const renderWidget = useCallback(() => {
     if (!siteKey || !containerRef.current || !window.turnstile || widgetId.current !== null) return;
+    clearRenderTimeout();
     widgetId.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
-      appearance: 'interaction-only',
+      // 'always' keeps the widget visibly present (a checkbox, not a silent
+      // background check) so users always have feedback and a real element
+      // to interact with — 'interaction-only' can render completely invisible
+      // and give no sign anything happened if it fails.
+      appearance: 'always',
       theme: 'light',
       callback: onToken,
       'expired-callback': () => onToken(''),
@@ -42,15 +57,27 @@ export default function Turnstile({ onToken, onError }: TurnstileProps) {
         onError?.();
       },
     });
-  }, [siteKey, onToken, onError]);
+  }, [siteKey, onToken, onError, clearRenderTimeout]);
 
   useEffect(() => {
+    if (!siteKey) {
+      onError?.();
+      return;
+    }
+    // If the Cloudflare script never loads (network issue, blocked, slow
+    // connection) the widget would otherwise sit blank forever with no
+    // feedback. Fail loudly instead after a reasonable wait.
+    timeoutRef.current = window.setTimeout(() => {
+      if (widgetId.current === null) onError?.();
+    }, RENDER_TIMEOUT_MS);
     renderWidget();
     return () => {
+      clearRenderTimeout();
       if (widgetId.current !== null) window.turnstile?.reset(widgetId.current);
       widgetId.current = null;
     };
-  }, [renderWidget]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!siteKey) return null;
 

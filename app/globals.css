@@ -109,6 +109,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .report-details textarea{min-height:120px;resize:vertical;width:100%;border:1px solid #cfc6b6;background:#fffdf7;color:#171511;border-radius:12px;padding:12px;outline:none;font-size:16px;line-height:24px}
 .report-card select{appearance:auto}
 .provider-button{width:100%}
+.turnstile-slot{margin:16px 0}
+.turnstile-status{margin-top:8px;font-size:13px}
 .auth-error-page{max-width:480px}
 .legal{max-width:680px}
 .legal h1{margin-bottom:24px}
