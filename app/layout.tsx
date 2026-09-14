@@ -26,9 +26,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Internet Court',
+    url: siteUrl,
+    description: 'A public court where people submit a case, strangers vote, and the case receives a real verdict.',
+  };
   return (
     <html lang="en">
       <body className={manrope.variable}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
         <a className="skip-link" href="#main">Skip to content</a>
         <ToastProvider>{children}</ToastProvider>
       </body>

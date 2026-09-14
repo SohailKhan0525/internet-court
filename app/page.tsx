@@ -11,6 +11,18 @@ import { useToast } from './components/Toast';
 const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'makes', 'the', 'call.'];
 
 export default function Home() {
+  const faqStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      { '@type': 'Question', name: 'Can anyone read a public case?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Public cases are designed to be opened and shared by anyone. You only need to sign in when you want to vote or create a case.' } },
+      { '@type': 'Question', name: 'How is the verdict decided?', acceptedAnswer: { '@type': 'Answer', text: 'The verdict is based on the stored for and against vote totals. There is no hidden consensus score.' } },
+      { '@type': 'Question', name: 'Do I need a password?', acceptedAnswer: { '@type': 'Answer', text: 'No. Internet Court uses Google sign in, so you can enter without creating or remembering another password.' } },
+      { '@type': 'Question', name: 'Can I report a case?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Every public case has a reporting path for abuse such as harassment, threats, personal data, hate and spam.' } },
+      { '@type': 'Question', name: 'Is starting a case free?', acceptedAnswer: { '@type': 'Answer', text: 'Public cases are free to start. Membership is for people who want more control over their cases and identity.' } },
+      { '@type': 'Question', name: 'Does Internet Court use fake votes?', acceptedAnswer: { '@type': 'Answer', text: 'No. The product is built around real authenticated votes and server side checks.' } },
+    ],
+  };
   const { showToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -99,6 +111,7 @@ export default function Home() {
 
   return (
     <div className="site">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }} />
       <header className="nav">
         <a className="brand" href="/" aria-label="Internet Court home">INTERNET COURT</a>
         <nav className="nav-actions" aria-label="Primary navigation">
