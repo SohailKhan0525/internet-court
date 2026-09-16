@@ -4,6 +4,7 @@ import { use, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import AuthModal from '../../components/AuthModal';
 import { useToast } from '../../components/Toast';
+import SiteNav from '../../components/SiteNav';
 
 type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
@@ -133,8 +134,13 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
 
   return (
     <main className="site">
-      <header className="nav"><a className="brand" href="/">INTERNET COURT<span className="case-tagline">A public court for real arguments</span></a><div className="nav-actions">{!user && <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}<a className="button ghost" href="/">Start your own case</a></div></header>
-      <section className="section section-shell">
+      <SiteNav
+        user={user}
+        onSignIn={() => setAuthOpen(true)}
+        onSignOut={async () => { await getSupabase().auth.signOut(); setUser(null); }}
+        onStartCase={() => { window.location.href = '/'; }}
+      />
+      <section className="section section-shell" style={{ paddingTop: 96 }}>
         <span className="eyebrow">CASE {item.slug}</span>
         <h1 className="section-title">{item.title}</h1>
         {profile?.username && <p>Filed by {profile.display_name || profile.username}</p>}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
 import { invokeEdgeFunction } from '../../lib/functions';
+import SiteNav from '../components/SiteNav';
 import ComparisonTable from '../components/ComparisonTable';
 import { useToast } from '../components/Toast';
 
@@ -61,13 +62,20 @@ export default function PricingPage() {
     window.location.assign(data.approval_url);
   }
 
+  async function signOut() {
+    await getSupabase().auth.signOut();
+    setUser(null);
+  }
+
   return (
     <div className="site">
-      <header className="nav">
-        <a className="brand" href="/">INTERNET COURT</a>
-        <a className="button ghost" href="/">Back</a>
-      </header>
-      <main id="main">
+      <SiteNav
+        user={user}
+        onSignIn={() => { window.location.href = '/?signin=required'; }}
+        onSignOut={signOut}
+        onStartCase={() => { window.location.href = '/'; }}
+      />
+      <main id="main" style={{ paddingTop: 96 }}>
         <section className="section section-shell pricing-hero">
           <span className="eyebrow">Membership</span>
           <h1 className="section-title">Choose your seat in the court.</h1>

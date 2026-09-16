@@ -6,6 +6,8 @@ import { invokeEdgeFunction } from '../lib/functions';
 import AuthModal from './components/AuthModal';
 import Turnstile from './components/Turnstile';
 import ComparisonTable from './components/ComparisonTable';
+import SiteNav from './components/SiteNav';
+import { ArrowRight } from '@phosphor-icons/react';
 import { useToast } from './components/Toast';
 
 const taglineWords = ['You', 'make', 'the', 'argument.', 'The', 'internet', 'makes', 'the', 'call.'];
@@ -112,24 +114,21 @@ export default function Home() {
   return (
     <div className="site">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }} />
-      <header className="nav">
-        <a className="brand" href="/" aria-label="Internet Court home">INTERNET COURT</a>
-        <nav className="nav-actions" aria-label="Primary navigation">
-          <a className="nav-link" href="#how">How it works</a>
-          <a className="nav-link" href="/pricing">Membership</a>
-          {user ? <button className="button ghost" onClick={signOut}>Sign out</button> : <button className="button ghost" onClick={() => setAuthOpen(true)}>Sign in</button>}
-          <button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button>
-        </nav>
-      </header>
+      <SiteNav
+        user={user}
+        onSignIn={() => setAuthOpen(true)}
+        onSignOut={signOut}
+        onStartCase={() => (user ? setCaseOpen(true) : setAuthOpen(true))}
+      />
 
       <main id="main">
-        <section className="hero section-shell">
+        <section className="hero section-shell" style={{ paddingTop: 128 }}>
           <div className="hero-copy">
             <span className="eyebrow">A public court for private arguments</span>
             <h1>Someone is wrong.<br />Probably you.</h1>
             <p>Put your argument on trial. Let strangers vote. Get a verdict worth sending to the group chat.</p>
             <div className="hero-actions">
-              <button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case</button>
+              <button className="button" onClick={() => user ? setCaseOpen(true) : setAuthOpen(true)}>Start a case <ArrowRight className="btn-icon" weight="bold" size={16} /></button>
               <a className="button secondary" href="#how">See how it works</a>
             </div>
             {authError && <p className="error" role="alert">{authError}</p>}

@@ -1,10 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
-import { invokeEdgeFunction } from '../../lib/functions';
 import { useToast } from './Toast';
-import Turnstile from './Turnstile';
 
 type AuthModalProps = {
   open: boolean;
@@ -15,17 +13,6 @@ type AuthModalProps = {
 export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileStatus, setTurnstileStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-
-  const handleTurnstileToken = useCallback((token: string) => {
-    setTurnstileToken(token);
-    setTurnstileStatus(token ? 'ready' : 'loading');
-  }, []);
-  const handleTurnstileError = useCallback(() => {
-    setTurnstileToken('');
-    setTurnstileStatus('error');
-  }, []);
 
   if (!open) return null;
 
@@ -37,19 +24,7 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
   }
 
   async function signInWithGoogle() {
-    if (!turnstileToken) {
-      showToast('Complete the security check above before continuing.', 'error');
-      return;
-    }
     setLoading(true);
-    const { data, error: verifyError } = await invokeEdgeFunction<{ verified: boolean }>('verify-turnstile', {
-      turnstile_token: turnstileToken,
-    });
-    if (verifyError || !data?.verified) {
-      setLoading(false);
-      showToast(verifyError ?? 'Security verification failed. Please try again.', 'error');
-      return;
-    }
     const { error: signInError } = await getSupabase().auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: callbackUrl() },
@@ -69,13 +44,8 @@ export default function AuthModal({ open, nextPath = '/', onClose }: AuthModalPr
         <button className="modal-close" aria-label="Close sign in" onClick={onClose}>Close</button>
         <h2 id="auth-title">Enter the court</h2>
         <p>Sign in with Google. No password to remember, no email to check.</p>
-        <div className="turnstile-slot">
-          <Turnstile onToken={handleTurnstileToken} onError={handleTurnstileError} />
-          {turnstileStatus === 'loading' && <p className="muted turnstile-status">Loading security check…</p>}
-          {turnstileStatus === 'error' && <p className="error turnstile-status" role="alert">Security check failed to load. Check your connection and refresh the page.</p>}
-        </div>
-        <button className="button provider-button" type="button" disabled={loading || turnstileStatus !== 'ready'} onClick={signInWithGoogle}>
-          {loading ? 'Opening Google…' : turnstileStatus === 'ready' ? 'Continue with Google' : 'Waiting for security check…'}
+        <button className="button provider-button" type="button" disabled={loading} onClick={signInWithGoogle}>
+          {loading ? 'Opening Google…' : 'Continue with Google'}
         </button>
       </div>
     </div>
