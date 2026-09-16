@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     title: 'Internet Court | Someone is wrong. Probably you.',
     description: 'Put your argument on trial. Let strangers vote. Get a verdict worth sending to the group chat.',
   },
+  verification: {
+    google: 'SU6MEJx7U1dYCNjzH8u61_7BQd8Jbj3YhSBwU6Fj0gw',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

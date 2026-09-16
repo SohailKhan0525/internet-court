@@ -20,19 +20,6 @@ function required(name: string) {
   return value;
 }
 
-async function verifyTurnstile(token: string, req: Request) {
-  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (!secret) throw new Error("Turnstile is not configured");
-  const formData = new FormData();
-  formData.append("secret", secret);
-  formData.append("response", token);
-  const ip = req.headers.get("CF-Connecting-IP");
-  if (ip) formData.append("remoteip", ip);
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: formData });
-  if (!response.ok) throw new Error("Turnstile verification request failed");
-  return response.json() as Promise<{ success: boolean }>;
-}
-
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] as string));
 }
@@ -46,14 +33,11 @@ Deno.serve(async (req: Request) => {
     const name = typeof body?.name === "string" ? body.name.trim().slice(0, 120) : "";
     const email = typeof body?.email === "string" ? body.email.trim().slice(0, 254) : "";
     const message = typeof body?.message === "string" ? body.message.trim().slice(0, 4000) : "";
-    const turnstileToken = typeof body?.turnstile_token === "string" ? body.turnstile_token : "";
+    const honeypot = typeof body?.website === "string" ? body.website.trim() : "";
 
+    if (honeypot) return json({ sent: true }); // bot tripped the honeypot -- report success, do nothing
     if (!name || !email || !message) return json({ error: "Name, email, and message are required" }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Enter a valid email address" }, 400);
-    if (!turnstileToken) return json({ error: "Security verification required" }, 400);
-
-    const turnstile = await verifyTurnstile(turnstileToken, req).catch(() => null);
-    if (!turnstile?.success) return json({ error: "Security verification failed" }, 403);
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
