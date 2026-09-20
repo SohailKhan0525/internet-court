@@ -42,6 +42,11 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       }
       setUser(userResult.data.user ?? null);
     });
+
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('filed') === '1') {
+      showToast('Case filed. Share it to get real votes.', 'success');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [slug]);
 
   const total = useMemo(() => (item?.for_votes ?? 0) + (item?.against_votes ?? 0), [item]);
@@ -146,7 +151,17 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
               </>
             )}
             {voted !== null && <p className="success-text">Your vote is recorded.</p>}
-            <button className="btn-outline btn" style={{ marginTop: 16 }} onClick={share}>Share this case</button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+              <button className="btn-outline btn" onClick={share}>Share this case</button>
+              <a
+                className="btn-outline btn"
+                href={`https://x.com/intent/post?text=${encodeURIComponent(`"${item.title}" — vote on it at Internet Court`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Share on X
+              </a>
+            </div>
           </div>
         </div>
 

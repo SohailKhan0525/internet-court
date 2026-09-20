@@ -40,7 +40,7 @@ export default function NewCasePage() {
     const created = Array.isArray(data?.case) ? data.case[0] : data?.case;
     const slug = (created as { slug?: string } | null)?.slug;
     if (!slug) return setError('The case was not returned by the server.');
-    window.location.href = `/c/${slug}`;
+    window.location.href = `/c/${slug}?filed=1`;
   }
 
   if (checkingAuth) return null;

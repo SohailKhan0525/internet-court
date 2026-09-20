@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Fraunces, Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from './components/Toast';
+import RealtimeNotices from './components/RealtimeNotices';
 
 const fraunces = Fraunces({ subsets: ['latin'], display: 'swap', variable: '--font-fraunces', weight: ['500', '600', '700'] });
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
@@ -52,7 +53,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
         <a className="skip-link" href="#main">Skip to content</a>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <RealtimeNotices />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

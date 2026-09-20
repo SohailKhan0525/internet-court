@@ -5,17 +5,20 @@ export const dynamic = 'force-dynamic';
 
 type Profile = { id: string; username: string; display_name: string; avatar_url: string | null; bio: string | null; created_at: string };
 type CaseItem = { slug: string; title: string; argument: string; status: string; for_votes: number; against_votes: number; created_at: string };
+type Badge = { code: string; label: string; description: string; earned: boolean };
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
-  const [{ data: profile }, { data: cases }] = await Promise.all([
+  const [{ data: profile }, { data: cases }, { data: badgeData }] = await Promise.all([
     supabase.rpc('get_public_profile', { p_username: username }).maybeSingle<Profile>(),
     supabase.rpc('get_public_profile_cases', { p_username: username }),
+    supabase.rpc('get_profile_badges', { p_username: username }),
   ]);
 
   if (!profile) notFound();
   const publicCases = (cases ?? []) as CaseItem[];
+  const badges = (badgeData ?? []) as Badge[];
 
   return (
     <main className="site">
@@ -30,6 +33,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         <h1 className="display" style={{ fontSize: 'clamp(28px,4vw,40px)', marginTop: 8 }}>{profile.display_name}</h1>
         {profile.bio && <p className="lede" style={{ marginTop: 12 }}>{profile.bio}</p>}
         <p className="faint" style={{ marginTop: 12, fontSize: 14 }}>{publicCases.length} {publicCases.length === 1 ? 'public case' : 'public cases'}</p>
+
+        {badges.length > 0 && (
+          <div className="badge-row" aria-label="Achievements">
+            {badges.map((badge) => (
+              <span key={badge.code} className={`badge ${badge.earned ? 'badge-earned' : ''}`} title={badge.description}>
+                {badge.earned ? '✓' : '○'} {badge.label}
+              </span>
+            ))}
+          </div>
+        )}
 
         <hr className="rule" style={{ margin: '32px 0' }} />
 

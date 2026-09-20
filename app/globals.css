@@ -39,6 +39,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .wordmark{font-family:var(--font-fraunces);font-weight:600;font-size:19px;letter-spacing:-.01em}
 .wordmark small{display:block;font-family:var(--font-plex-mono);font-size:10px;font-weight:400;letter-spacing:.06em;color:var(--ink-faint);margin-top:2px}
 .header-links{display:flex;align-items:center;gap:8px}
+.header-links-desktop{display:flex}
+.header-menu{display:none;position:relative}
+.header-menu-toggle{display:flex;flex-direction:column;justify-content:center;gap:4px;width:40px;height:40px;border:1px solid var(--paper-line);border-radius:4px;cursor:pointer;list-style:none}
+.header-menu-toggle::-webkit-details-marker{display:none}
+.header-menu-toggle span{display:block;width:18px;height:2px;background:var(--ink);margin:0 auto}
+.header-menu-panel{position:absolute;top:calc(100% + 8px);right:0;display:flex;flex-direction:column;gap:2px;min-width:200px;background:#fff;border:1px solid var(--paper-line);border-radius:4px;box-shadow:3px 3px 0 var(--paper-line);padding:8px;z-index:50}
+.header-menu-panel .header-link{width:100%;text-align:left}
+.header-menu-panel .btn{margin-top:6px}
+
+@media(max-width:760px){
+  .header-links-desktop{display:none}
+  .header-menu{display:block}
+}
 .header-link{padding:8px 12px;font-size:14px;font-weight:500;color:var(--ink-soft);border-radius:4px;transition:color 150ms ease,background-color 150ms ease}
 .header-link:hover{color:var(--ink);background:#f1f0eb}
 
@@ -135,10 +148,11 @@ h2.section-head{font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0 0 12px}
   .shell{padding-left:20px;padding-right:20px}
   .section{padding-top:56px;padding-bottom:56px}
   .docket-body{padding:20px}
-  /* Only the secondary nav links collapse on mobile. Sign in / sign out must
-     stay reachable or mobile users have no way into the product at all. */
-  .header-link-secondary{display:none}
   .docket-header .shell{gap:8px}
   .wordmark{font-size:16px}
   .header-link{padding:8px}
 }
+
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-plex-mono);font-size:11px;letter-spacing:.03em;padding:6px 10px;border-radius:2px;border:1px solid var(--paper-line);color:var(--ink-faint)}
+.badge-earned{border-color:var(--ink);color:var(--ink);background:#f8f7f3}
