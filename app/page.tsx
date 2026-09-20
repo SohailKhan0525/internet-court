@@ -36,7 +36,7 @@ export default function Home() {
 
       <main id="main">
         {/* Hero */}
-        <section className="shell" style={{ paddingTop: 64, paddingBottom: 64, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 48, alignItems: 'center' }}>
+        <section className="shell hero-grid">
           <div>
             <p className="kicker">Filed in the court of public opinion</p>
             <h1 className="display" style={{ marginTop: 12 }}>Someone is wrong.<br />Probably you.</h1>
@@ -66,7 +66,7 @@ export default function Home() {
         <section className="shell section" id="how">
           <p className="kicker">How it works</p>
           <h2 className="section-head" style={{ marginTop: 8 }}>Three steps to a verdict.</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, marginTop: 32 }}>
+          <div className="steps-grid">
             <div>
               <p className="mono" style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 8 }}>Step 1</p>
               <h3 style={{ fontSize: 19, margin: '0 0 8px' }}>File the case</h3>
@@ -124,7 +124,7 @@ export default function Home() {
         <hr className="rule shell" />
 
         {/* Membership CTA */}
-        <section className="shell section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 24 }}>
+        <section className="shell section cta-row">
           <div>
             <p className="kicker">Membership</p>
             <h2 className="section-head" style={{ marginTop: 8, marginBottom: 8 }}>Keep the jury free. Pay for more control.</h2>
@@ -142,6 +142,7 @@ export default function Home() {
             <a href="/contact">Contact</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
+            <a href="https://x.com/qofeno" target="_blank" rel="me noopener noreferrer">X</a>
           </span>
         </div>
       </footer>

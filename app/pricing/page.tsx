@@ -73,7 +73,7 @@ export default function PricingPage() {
         </div>
 
         <div className="shell" style={{ paddingBottom: 48 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 24, maxWidth: 760 }}>
+          <div className="plans-grid">
             {plans.map((plan) => (
               <div className="docket" key={plan.code}>
                 <div className="docket-body">
@@ -115,7 +115,7 @@ export default function PricingPage() {
           />
         </div>
       </main>
-      <footer className="docket-footer"><div className="shell"><span>Internet Court</span><a href="/">Return to court</a></div></footer>
+      <footer className="docket-footer"><div className="shell"><span>Internet Court</span><span style={{ display: 'flex', gap: 16 }}><a href="/contact">Contact</a><a href="https://x.com/qofeno" target="_blank" rel="me noopener noreferrer">X</a><a href="/">Return to court</a></span></div></footer>
     </div>
   );
 }

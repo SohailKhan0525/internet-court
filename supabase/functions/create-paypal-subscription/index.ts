@@ -18,6 +18,17 @@ function required(name: string) {
   return value;
 }
 
+
+// Supabase auto-injects SUPABASE_SERVICE_ROLE_KEY into every edge function.
+// It also REJECTS any custom secret whose name starts with SUPABASE_, so the
+// previously-referenced "SUPABASE_SECRET_KEY" could never be set and this
+// function failed on every single invocation with a 500.
+function serviceRoleKey() {
+  const value = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY");
+  if (!value) throw new Error("Missing service role key");
+  return value;
+}
+
 const PLAN_ENV_BY_CODE = {
   jury_member: "PAYPAL_PLAN_JURY_MEMBER",
   supreme_court: "PAYPAL_PLAN_SUPREME_COURT",
@@ -63,7 +74,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401);
 
-    const supabase = createClient(required("SUPABASE_URL"), required("SUPABASE_SECRET_KEY"), {
+    const supabase = createClient(required("SUPABASE_URL"), serviceRoleKey(), {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const token = authHeader.slice("Bearer ".length);

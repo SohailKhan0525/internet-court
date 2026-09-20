@@ -17,6 +17,17 @@ function required(name: string) {
   return value;
 }
 
+// Supabase auto-injects SUPABASE_SERVICE_ROLE_KEY into every edge function.
+// It also REJECTS any custom secret whose name starts with SUPABASE_, so the
+// previously-referenced "SUPABASE_SECRET_KEY" could never be set and this
+// function failed on every single invocation with a 500.
+function serviceRoleKey() {
+  const value = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY");
+  if (!value) throw new Error("Missing service role key");
+  return value;
+}
+
+
 async function accessToken(baseUrl: string) {
   const credentials = btoa(`${required("PAYPAL_CLIENT_ID")}:${required("PAYPAL_CLIENT_SECRET")}`);
   const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -63,7 +74,7 @@ Deno.serve(async (req) => {
     const event = JSON.parse(rawBody);
     if (!event.id || !event.event_type) return json({ error: "Invalid PayPal event" }, 400);
 
-    const supabase = createClient(required("SUPABASE_URL"), required("SUPABASE_SECRET_KEY"), { auth: { autoRefreshToken: false, persistSession: false } });
+    const supabase = createClient(required("SUPABASE_URL"), serviceRoleKey(), { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: inserted, error: insertError } = await supabase.from("paypal_webhook_events").insert({ event_id: event.id, event_type: event.event_type, payload: event }).select("event_id").maybeSingle();
     if (insertError && insertError.code !== "23505") throw insertError;
     if (!inserted) return json({ ok: true, duplicate: true });

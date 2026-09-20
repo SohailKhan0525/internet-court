@@ -18,8 +18,8 @@ export default function DocketHeader({ user, currentPath = '/' }: DocketHeaderPr
       <div className="shell">
         <a href="/" className="wordmark">INTERNET COURT<small>PUBLIC CASE DOCKET</small></a>
         <nav className="header-links" aria-label="Primary">
-          <a className="header-link" href="/pricing">Pricing</a>
-          <a className="header-link" href="/contact">Contact</a>
+          <a className="header-link header-link-secondary" href="/pricing">Pricing</a>
+          <a className="header-link header-link-secondary" href="/contact">Contact</a>
           {user ? (
             <button className="btn-quiet header-link" type="button" onClick={signOut}>Sign out</button>
           ) : (

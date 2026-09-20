@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Fraunces, Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from './components/Toast';
@@ -22,12 +22,20 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@qofeno',
+    creator: '@qofeno',
     title: 'Internet Court | Someone is wrong. Probably you.',
     description: 'Put your argument on trial. Let strangers vote. Get a verdict worth sending to the group chat.',
   },
   verification: {
     google: 'SU6MEJx7U1dYCNjzH8u61_7BQd8Jbj3YhSBwU6Fj0gw',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -37,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     name: 'Internet Court',
     url: siteUrl,
     description: 'A public court where people submit a case, strangers vote, and the case receives a real verdict.',
+    sameAs: ['https://x.com/qofeno'],
   };
   return (
     <html lang="en">

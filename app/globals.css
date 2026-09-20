@@ -118,9 +118,27 @@ h2.section-head{font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0 0 12px}
 .legal p{margin:0 0 4px;color:var(--ink-soft);font-size:16px;line-height:1.6}
 .legal .muted{margin-top:36px;padding-top:20px;border-top:1px dashed var(--paper-line);font-size:13px}
 
+/* Responsive grids — these must be CSS classes, not inline styles,
+   because inline styles cannot carry media queries. */
+.hero-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center;padding-top:64px;padding-bottom:64px}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:32px}
+.plans-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;max-width:760px}
+.cta-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px}
+
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr;gap:36px;padding-top:40px;padding-bottom:40px}
+  .steps-grid{grid-template-columns:1fr;gap:28px}
+  .plans-grid{grid-template-columns:1fr}
+}
+
 @media(max-width:680px){
   .shell{padding-left:20px;padding-right:20px}
   .section{padding-top:56px;padding-bottom:56px}
   .docket-body{padding:20px}
-  .header-link{display:none}
+  /* Only the secondary nav links collapse on mobile. Sign in / sign out must
+     stay reachable or mobile users have no way into the product at all. */
+  .header-link-secondary{display:none}
+  .docket-header .shell{gap:8px}
+  .wordmark{font-size:16px}
+  .header-link{padding:8px}
 }
