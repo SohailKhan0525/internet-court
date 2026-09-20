@@ -2,9 +2,8 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '../../../lib/supabase';
-import AuthModal from '../../components/AuthModal';
 import { useToast } from '../../components/Toast';
-import SiteNav from '../../components/SiteNav';
+import DocketHeader from '../../components/DocketHeader';
 
 type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
@@ -25,8 +24,6 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
   const [reportReason, setReportReason] = useState<(typeof reasons)[number]>('spam');
   const [reportDetails, setReportDetails] = useState('');
   const [reportStatus, setReportStatus] = useState('');
-  const [authOpen, setAuthOpen] = useState(false);
-  const [pendingVote, setPendingVote] = useState<boolean | null>(null);
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -45,23 +42,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       }
       setUser(userResult.data.user ?? null);
     });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) setAuthOpen(false);
-    });
-    return () => listener.subscription.unsubscribe();
   }, [slug]);
 
-  useEffect(() => {
-    if (user && pendingVote !== null && item && !voting) {
-      const choice = pendingVote;
-      setPendingVote(null);
-      void submitVote(choice);
-    }
-  }, [user, pendingVote, item, voting]);
-
   const total = useMemo(() => (item?.for_votes ?? 0) + (item?.against_votes ?? 0), [item]);
+  const forPct = total > 0 ? Math.round(((item?.for_votes ?? 0) / total) * 100) : 50;
   const liveVerdict = useMemo(() => {
     if (!item) return '';
     if (total === 0) return 'No verdict yet.';
@@ -92,8 +76,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
   function vote(choice: boolean) {
     setError('');
     if (!user) {
-      setPendingVote(choice);
-      setAuthOpen(true);
+      window.location.href = `/signin?next=${encodeURIComponent(`/c/${slug}`)}`;
       return;
     }
     void submitVote(choice);
@@ -114,8 +97,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
   async function submitReport() {
     setReportStatus('');
     if (!user) {
-      setAuthOpen(true);
-      setReportStatus('Sign in to report a case.');
+      window.location.href = `/signin?next=${encodeURIComponent(`/c/${slug}`)}`;
       return;
     }
     if (!item) return;
@@ -128,31 +110,66 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     setReporting(false);
   }
 
-  if (error && !item) return <main className="hero"><p className="error">{error}</p></main>;
-  if (!item) return <main className="hero"><p>Loading the case…</p></main>;
-  if (item.status === 'removed') return <main className="hero"><h1>Case unavailable.</h1><p>This case is no longer public.</p></main>;
+  if (error && !item) return <main className="site"><div className="shell section"><p className="error-text">{error}</p></div></main>;
+  if (!item) return <main className="site"><div className="shell section"><p className="muted">Loading the case…</p></div></main>;
+  if (item.status === 'removed') return <main className="site"><div className="shell section"><h1 className="display" style={{ fontSize: 32 }}>Case unavailable.</h1><p className="muted">This case is no longer public.</p></div></main>;
 
   return (
     <main className="site">
-      <SiteNav
-        user={user}
-        onSignIn={() => setAuthOpen(true)}
-        onSignOut={async () => { await getSupabase().auth.signOut(); setUser(null); }}
-        onStartCase={() => { window.location.href = '/'; }}
-      />
-      <section className="section section-shell" style={{ paddingTop: 96 }}>
-        <span className="eyebrow">CASE {item.slug}</span>
-        <h1 className="section-title">{item.title}</h1>
-        {profile?.username && <p>Filed by {profile.display_name || profile.username}</p>}
-        <article className="card case-argument"><p>{item.argument}</p></article>
-        <p className="muted case-explainer">Read the argument above, then pick a side. The verdict below is just the real vote count — no hidden algorithm, no fake votes.</p>
-        <div className="grid vote-grid"><button className="button" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button><button className="button secondary" disabled={voting || voted !== null} onClick={() => vote(false)}>I disagree</button></div>
-        {!user && <p className="muted">Sign in is required to cast a vote. Your vote is counted once.</p>}
-        {error && <p className="error" role="alert">{error}</p>}
-        <article className="card verdict-card"><span className="eyebrow">THE VERDICT</span><h2>{verdict || liveVerdict}</h2><p>{total} {total === 1 ? 'vote' : 'votes'} · {item.for_votes} for · {item.against_votes} against</p>{voted !== null && <p className="success">Your vote is recorded.</p>}<button className="button ghost" onClick={share}>Share this case</button></article>
-        <details className="report-panel"><summary>Report this case</summary><div className="card report-card"><label>Reason<select value={reportReason} onChange={(event) => setReportReason(event.target.value as (typeof reasons)[number])}>{reasons.map((reason) => <option key={reason} value={reason}>{reason.replace('_', ' ')}</option>)}</select></label><label className="report-details">Details<textarea value={reportDetails} maxLength={2000} onChange={(event) => setReportDetails(event.target.value)} /></label><button className="button secondary" disabled={reporting} onClick={submitReport}>{reporting ? 'Submitting…' : 'Submit report'}</button>{reportStatus && <p>{reportStatus}</p>}</div></details>
-      </section>
-      <AuthModal open={authOpen} nextPath={`/c/${slug}`} onClose={() => setAuthOpen(false)} />
+      <DocketHeader user={user} currentPath={`/c/${slug}`} />
+      <div className="shell section" style={{ maxWidth: 720 }}>
+        <p className="kicker">Case No. {item.slug}</p>
+        <h1 className="display" style={{ fontSize: 'clamp(28px,4vw,40px)', marginTop: 8 }}>{item.title}</h1>
+        {profile?.username && <p className="muted" style={{ marginTop: 8 }}>Filed by {profile.display_name || profile.username}</p>}
+
+        <div className="docket" style={{ marginTop: 24 }}>
+          <div className="docket-body"><p style={{ margin: 0, fontSize: 17, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{item.argument}</p></div>
+        </div>
+
+        <p className="muted" style={{ marginTop: 20, fontSize: 14 }}>Read the argument above, then pick a side. The verdict below is just the real vote count — no hidden algorithm, no fake votes.</p>
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+          <button className="btn" disabled={voting || voted !== null} onClick={() => vote(true)}>I agree</button>
+          <button className="btn btn-outline" disabled={voting || voted !== null} onClick={() => vote(false)}>I disagree</button>
+        </div>
+        {!user && <p className="faint" style={{ fontSize: 13, marginTop: 8 }}>Sign in is required to cast a vote. Your vote is counted once.</p>}
+        {error && <p className="error-text" role="alert">{error}</p>}
+
+        <div className="docket" style={{ marginTop: 32 }}>
+          <span className="docket-tab">The verdict</span>
+          <div className="docket-body">
+            <h2 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 24, margin: '0 0 12px' }}>{verdict || liveVerdict}</h2>
+            {total > 0 && (
+              <>
+                <div className="vote-bar"><div className="vote-bar-for" style={{ width: `${forPct}%` }} /><div className="vote-bar-against" style={{ width: `${100 - forPct}%` }} /></div>
+                <div className="vote-meta"><span>FOR · {item.for_votes}</span><span>AGAINST · {item.against_votes}</span></div>
+              </>
+            )}
+            {voted !== null && <p className="success-text">Your vote is recorded.</p>}
+            <button className="btn-outline btn" style={{ marginTop: 16 }} onClick={share}>Share this case</button>
+          </div>
+        </div>
+
+        <details style={{ marginTop: 32 }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: 14 }}>Report this case</summary>
+          <div className="docket" style={{ marginTop: 12 }}>
+            <div className="docket-body">
+              <div className="field">
+                <label htmlFor="report-reason">Reason</label>
+                <select id="report-reason" value={reportReason} onChange={(event) => setReportReason(event.target.value as (typeof reasons)[number])}>
+                  {reasons.map((reason) => <option key={reason} value={reason}>{reason.replace('_', ' ')}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="report-details">Details</label>
+                <textarea id="report-details" value={reportDetails} maxLength={2000} onChange={(event) => setReportDetails(event.target.value)} />
+              </div>
+              <button className="btn btn-outline" disabled={reporting} onClick={submitReport}>{reporting ? 'Submitting…' : 'Submit report'}</button>
+              {reportStatus && <p className="muted" style={{ marginTop: 8 }}>{reportStatus}</p>}
+            </div>
+          </div>
+        </details>
+      </div>
     </main>
   );
 }

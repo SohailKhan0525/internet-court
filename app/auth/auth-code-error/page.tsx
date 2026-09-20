@@ -1,18 +1,19 @@
 export default function AuthCodeErrorPage() {
   return (
-    <main id="main" className="site">
-      <header className="nav">
-        <a className="brand" href="/">INTERNET COURT</a>
-        <a className="button ghost" href="/">Back to court</a>
+    <main className="site" id="main">
+      <header className="docket-header">
+        <div className="shell"><a href="/" className="wordmark">INTERNET COURT<small>PUBLIC CASE DOCKET</small></a></div>
       </header>
-      <section className="section section-shell">
-        <div className="card auth-error-page">
-          <span className="eyebrow">Sign in</span>
-          <h1 className="section-title">That sign in link could not be completed.</h1>
-          <p>Request a new link and try again. If you were signing in with Google, start the Google sign in again.</p>
-          <a className="button" href="/">Return to Internet Court</a>
+      <div className="shell section" style={{ maxWidth: 520 }}>
+        <div className="docket">
+          <span className="docket-tab">Sign in</span>
+          <div className="docket-body">
+            <h1 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 24, margin: '0 0 10px' }}>That sign in could not be completed.</h1>
+            <p className="muted" style={{ marginTop: 0 }}>Start the Google sign in again. If it keeps failing, your browser may be blocking third-party cookies.</p>
+            <a className="btn" href="/signin" style={{ marginTop: 16 }}>Try signing in again</a>
+          </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

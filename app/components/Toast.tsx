@@ -12,10 +12,10 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const KIND_STYLES: Record<ToastKind, string> = {
-  error: 'bg-[#3a1414] text-[#ffe8e0] border border-[#6b2a20]',
-  success: 'bg-[#16261a] text-[#dcf5e2] border border-[#2c4d33]',
-  info: 'bg-[#171511] text-[#fffdf7] border border-[#3a352a]',
+const KIND_CLASS: Record<ToastKind, string> = {
+  error: 'toast toast-error',
+  success: 'toast toast-success',
+  info: 'toast',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -53,7 +53,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl px-4 py-3 text-sm leading-snug shadow-lg ${KIND_STYLES[toast.kind]}`}
+              className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 ${KIND_CLASS[toast.kind]}`}
             >
               <span className="flex-1">{toast.message}</span>
               <button

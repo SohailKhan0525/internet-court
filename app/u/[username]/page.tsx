@@ -19,32 +19,38 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   return (
     <main className="site">
-      <header className="nav"><a className="brand" href="/">INTERNET COURT<span className="case-tagline">A public court for real arguments</span></a><a className="button ghost" href="/">Start a case</a></header>
-      <section className="section section-shell">
-        <div className="card">
-          <p className="eyebrow">@{profile.username}</p>
-          <h1 className="section-title">{profile.display_name}</h1>
-          {profile.bio && <p>{profile.bio}</p>}
-          <p>{publicCases.length} {publicCases.length === 1 ? 'public case' : 'public cases'}</p>
+      <header className="docket-header">
+        <div className="shell">
+          <a href="/" className="wordmark">INTERNET COURT<small>PUBLIC CASE DOCKET</small></a>
+          <a className="btn" href="/new">File a case</a>
         </div>
-        <div className="mt-8">
-          <h2>Cases filed</h2>
-          {publicCases.length === 0 ? (
-            <div className="card"><p>This profile has not published a case yet.</p></div>
-          ) : (
-            <div className="grid">
-              {publicCases.map((item) => (
-                <a className="card" href={`/c/${item.slug}`} key={item.slug}>
-                  <p className="eyebrow">{item.status}</p>
-                  <h3>{item.title}</h3>
-                  <p>{item.argument.slice(0, 180)}{item.argument.length > 180 ? '…' : ''}</p>
-                  <p>{item.for_votes + item.against_votes} {item.for_votes + item.against_votes === 1 ? 'vote' : 'votes'}</p>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      </header>
+      <div className="shell section" id="main" style={{ maxWidth: 760 }}>
+        <p className="kicker">@{profile.username}</p>
+        <h1 className="display" style={{ fontSize: 'clamp(28px,4vw,40px)', marginTop: 8 }}>{profile.display_name}</h1>
+        {profile.bio && <p className="lede" style={{ marginTop: 12 }}>{profile.bio}</p>}
+        <p className="faint" style={{ marginTop: 12, fontSize: 14 }}>{publicCases.length} {publicCases.length === 1 ? 'public case' : 'public cases'}</p>
+
+        <hr className="rule" style={{ margin: '32px 0' }} />
+
+        <h2 className="section-head" style={{ fontSize: 22, marginBottom: 16 }}>Cases filed</h2>
+        {publicCases.length === 0 ? (
+          <div className="docket"><div className="docket-body"><p className="muted" style={{ margin: 0 }}>This profile has not published a case yet.</p></div></div>
+        ) : (
+          <div style={{ display: 'grid', gap: 16 }}>
+            {publicCases.map((item) => (
+              <a className="docket" href={`/c/${item.slug}`} key={item.slug} style={{ display: 'block' }}>
+                <div className="docket-body">
+                  <p className="mono" style={{ fontSize: 11, color: 'var(--ink-faint)', margin: '0 0 6px', letterSpacing: '.04em' }}>No. {item.slug}</p>
+                  <h3 style={{ fontSize: 19, margin: '0 0 8px' }}>{item.title}</h3>
+                  <p className="muted" style={{ fontSize: 15, lineHeight: 1.5, margin: '0 0 10px' }}>{item.argument.slice(0, 180)}{item.argument.length > 180 ? '…' : ''}</p>
+                  <p className="faint" style={{ fontSize: 13, margin: 0 }}>{item.for_votes + item.against_votes} {item.for_votes + item.against_votes === 1 ? 'vote' : 'votes'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

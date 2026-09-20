@@ -7,19 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-async function verifyTurnstile(token: string, req: Request) {
-  const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (!secret) throw new Error("Turnstile is not configured");
-  const formData = new FormData();
-  formData.append("secret", secret);
-  formData.append("response", token);
-  const ip = req.headers.get("CF-Connecting-IP");
-  if (ip) formData.append("remoteip", ip);
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: formData });
-  if (!response.ok) throw new Error("Turnstile verification request failed");
-  return response.json() as Promise<{ success: boolean }>;
-}
-
+// No Turnstile here by design: this action already requires a signed-in
+// session (checked below), and the account itself was already verified by
+// Turnstile at sign-in. Abuse from real accounts is handled by
+// create_case()'s own rate limiting in the database.
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
@@ -32,10 +23,6 @@ Deno.serve(async (req: Request) => {
   const title = typeof body?.title === "string" ? body.title : "";
   const argument = typeof body?.argument === "string" ? body.argument : "";
   const visibility = body?.visibility === "unlisted" || body?.visibility === "private" ? body.visibility : "public";
-  const turnstileToken = typeof body?.turnstile_token === "string" ? body.turnstile_token : "";
-  if (!turnstileToken) return Response.json({ error: "Security verification required" }, { status: 400, headers: corsHeaders });
-  const turnstile = await verifyTurnstile(turnstileToken, req).catch(() => null);
-  if (!turnstile?.success) return Response.json({ error: "Security verification failed" }, { status: 403, headers: corsHeaders });
   const { data, error } = await supabase.rpc("create_case", { p_title: title, p_argument: argument, p_visibility: visibility });
   if (error) return Response.json({ error: error.message }, { status: 400, headers: corsHeaders });
   return Response.json({ case: data }, { status: 201, headers: corsHeaders });

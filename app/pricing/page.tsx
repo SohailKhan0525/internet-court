@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase';
 import { invokeEdgeFunction } from '../../lib/functions';
-import SiteNav from '../components/SiteNav';
+import DocketHeader from '../components/DocketHeader';
 import ComparisonTable from '../components/ComparisonTable';
 import { useToast } from '../components/Toast';
 
@@ -13,7 +13,7 @@ const plans = [
     name: 'Jury Member',
     price: '$3',
     description: 'For people who want more control over who can see their cases.',
-    features: ['Public case creation', 'Private cases', 'Unlisted cases', 'Membership badge'],
+    features: ['Public case filing', 'Private cases', 'Unlisted cases', 'Membership badge'],
   },
   {
     code: 'supreme_court',
@@ -40,7 +40,7 @@ export default function PricingPage() {
   async function subscribe(planCode: string) {
     setError('');
     if (!user) {
-      window.location.href = '/?signin=required';
+      window.location.href = '/signin?next=/pricing';
       return;
     }
 
@@ -62,68 +62,60 @@ export default function PricingPage() {
     window.location.assign(data.approval_url);
   }
 
-  async function signOut() {
-    await getSupabase().auth.signOut();
-    setUser(null);
-  }
-
   return (
     <div className="site">
-      <SiteNav
-        user={user}
-        onSignIn={() => { window.location.href = '/?signin=required'; }}
-        onSignOut={signOut}
-        onStartCase={() => { window.location.href = '/'; }}
-      />
-      <main id="main" style={{ paddingTop: 96 }}>
-        <section className="section section-shell pricing-hero">
-          <span className="eyebrow">Membership</span>
-          <h1 className="section-title">Choose your seat in the court.</h1>
-          <p className="muted" style={{ maxWidth: 680, fontSize: 18 }}>The jury stays open to everyone. Membership unlocks private and unlisted cases and identifies paid members on the court.</p>
-        </section>
-        <section className="section section-shell" aria-label="Subscription plans">
-          <div className="grid pricing-grid">
+      <DocketHeader user={user} currentPath="/pricing" />
+      <main id="main">
+        <div className="shell section" style={{ paddingBottom: 32 }}>
+          <p className="kicker">Membership</p>
+          <h1 className="display" style={{ fontSize: 'clamp(32px,5vw,48px)', marginTop: 8 }}>Choose your seat in the court.</h1>
+          <p className="lede" style={{ marginTop: 16 }}>The jury stays open to everyone. Membership unlocks private and unlisted cases and identifies paid members on the court.</p>
+        </div>
+
+        <div className="shell" style={{ paddingBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 24, maxWidth: 760 }}>
             {plans.map((plan) => (
-              <article className="card" key={plan.code}>
-                <div>
-                  <h2>{plan.name}</h2>
-                  <p className="muted" style={{ marginTop: 12 }}>{plan.description}</p>
+              <div className="docket" key={plan.code}>
+                <div className="docket-body">
+                  <h2 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 24, margin: 0 }}>{plan.name}</h2>
+                  <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>{plan.description}</p>
+                  <p style={{ fontSize: 36, fontWeight: 700, margin: '16px 0', letterSpacing: '-0.02em' }}>{plan.price}<span style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink-faint)' }}> / month</span></p>
+                  <ul style={{ margin: '0 0 20px', paddingLeft: 18, color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.9 }}>
+                    {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+                  </ul>
+                  <button className="btn btn-block" disabled={loadingPlan !== null} onClick={() => subscribe(plan.code)}>
+                    {loadingPlan === plan.code ? 'Opening PayPal…' : `Choose ${plan.name}`}
+                  </button>
                 </div>
-                <div className="price">{plan.price}<span> / month</span></div>
-                <ul className="feature-list">
-                  {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
-                </ul>
-                <button className="button" disabled={loadingPlan !== null} onClick={() => subscribe(plan.code)}>
-                  {loadingPlan === plan.code ? 'Opening PayPal…' : `Choose ${plan.name}`}
-                </button>
-              </article>
+              </div>
             ))}
           </div>
-          {error && <div className="error" role="alert" style={{ marginTop: 24 }}>{error}</div>}
-          <p className="pricing-note">Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record. Subscriptions are billed monthly and can be cancelled anytime from your PayPal account; see our <a href="/terms">Terms</a> for the refund policy.</p>
-        </section>
-        <section className="section section-shell" aria-label="Feature comparison">
-          <div className="section-heading">
-            <span className="eyebrow">Compare</span>
-            <h2 className="section-title" style={{ fontSize: 'clamp(28px,4vw,36px)' }}>What each tier actually unlocks.</h2>
-            <p>No hidden features. This is the whole list.</p>
-          </div>
+          {error && <p className="error-text" role="alert" style={{ marginTop: 24 }}>{error}</p>}
+          <p className="faint" style={{ marginTop: 24, fontSize: 13, maxWidth: 640 }}>Payments are processed by PayPal. Internet Court does not store your PayPal credentials. Premium access changes only after a verified PayPal event updates the subscription record. Subscriptions are billed monthly and can be cancelled anytime from your PayPal account; see our <a href="/terms" style={{ textDecoration: 'underline' }}>Terms</a> for the refund policy.</p>
+        </div>
+
+        <hr className="rule shell" />
+
+        <div className="shell section" aria-label="Feature comparison">
+          <p className="kicker">Compare</p>
+          <h2 className="section-head" style={{ marginTop: 8 }}>What each tier actually unlocks.</h2>
+          <p className="muted" style={{ marginBottom: 24 }}>No hidden features. This is the whole list.</p>
           <ComparisonTable
             columns={['Free', 'Jury Member — $3/mo', 'Supreme Court — $7/mo']}
             highlightColumn={2}
             rows={[
               { label: 'Vote on public cases', values: [true, true, true] },
-              { label: 'Create public cases', values: [true, true, true] },
-              { label: 'Create private cases', values: [false, true, true] },
-              { label: 'Create unlisted cases (link-only)', values: [false, true, true] },
+              { label: 'File public cases', values: [true, true, true] },
+              { label: 'File private cases', values: [false, true, true] },
+              { label: 'File unlisted cases (link-only)', values: [false, true, true] },
               { label: 'Membership badge on your profile', values: [false, true, true] },
               { label: 'Supreme Court tier recognition', values: [false, false, true] },
             ]}
             caption="Jury Member and Supreme Court unlock the exact same private/unlisted case abilities — Supreme Court is a visible status tier on top, not extra functionality. If that's not worth $4/mo more to you, Jury Member does everything you need."
           />
-        </section>
+        </div>
       </main>
-      <footer className="footer"><span>Internet Court</span><a href="/">Return to court</a></footer>
+      <footer className="docket-footer"><div className="shell"><span>Internet Court</span><a href="/">Return to court</a></div></footer>
     </div>
   );
 }
