@@ -21,7 +21,10 @@ export default function DocketHeader({ user, currentPath = '/' }: DocketHeaderPr
           <a className="header-link header-link-secondary" href="/pricing">Pricing</a>
           <a className="header-link header-link-secondary" href="/contact">Contact</a>
           {user ? (
-            <button className="btn-quiet header-link" type="button" onClick={signOut}>Sign out</button>
+            <>
+              <a className="header-link header-link-secondary" href="/settings">Settings</a>
+              <button className="btn-quiet header-link" type="button" onClick={signOut}>Sign out</button>
+            </>
           ) : (
             <a className="header-link" href={`/signin?next=${encodeURIComponent(currentPath)}`}>Sign in</a>
           )}

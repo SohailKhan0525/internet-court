@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   const base = process.env.NEXT_PUBLIC_SITE_URL;
   if (!base) return { rules: { userAgent: '*', disallow: ['/'] } };
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/auth/', '/billing/', '/signin'] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/auth/', '/billing/', '/signin', '/settings', '/new'] },
     sitemap: `${base}/sitemap.xml`,
   };
 }
