@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import BadgeGrid from '../../components/BadgeGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,15 +35,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         {profile.bio && <p className="lede" style={{ marginTop: 12 }}>{profile.bio}</p>}
         <p className="faint" style={{ marginTop: 12, fontSize: 14 }}>{publicCases.length} {publicCases.length === 1 ? 'public case' : 'public cases'}</p>
 
-        {badges.length > 0 && (
-          <div className="badge-row" aria-label="Achievements">
-            {badges.map((badge) => (
-              <span key={badge.code} className={`badge ${badge.earned ? 'badge-earned' : ''}`} title={badge.description}>
-                {badge.earned ? '✓' : '○'} {badge.label}
-              </span>
-            ))}
-          </div>
-        )}
+        <BadgeGrid badges={badges} />
 
         <hr className="rule" style={{ margin: '32px 0' }} />
 

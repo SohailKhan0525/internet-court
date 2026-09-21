@@ -5,10 +5,11 @@ import { getSupabase } from '../../../lib/supabase';
 import { useToast } from '../../components/Toast';
 import DocketHeader from '../../components/DocketHeader';
 
-type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; created_at: string };
+type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; view_count: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
 
 const reasons = ['harassment', 'personal_data', 'threats', 'defamation', 'hate', 'spam', 'other'] as const;
+const SELECT_COLUMNS = 'id,slug,owner_id,title,argument,status,visibility,for_votes,against_votes,view_count,created_at';
 
 export default function CasePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -27,8 +28,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
 
   useEffect(() => {
     const supabase = getSupabase();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     Promise.all([
-      supabase.from('cases').select('id,slug,owner_id,title,argument,status,visibility,for_votes,against_votes,created_at').eq('slug', slug).maybeSingle(),
+      supabase.from('cases').select(SELECT_COLUMNS).eq('slug', slug).maybeSingle(),
       supabase.auth.getUser(),
     ]).then(async ([caseResult, userResult]) => {
       if (caseResult.error) setError(caseResult.error.message);
@@ -38,6 +41,19 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
         if (next) {
           const { data } = await supabase.from('profiles').select('username,display_name').eq('id', next.owner_id).maybeSingle();
           setProfile(data as ProfileRow | null);
+
+          // Real view counter -- unconditional increment, no fabricated numbers.
+          void supabase.rpc('increment_case_view', { p_case_id: next.id });
+
+          // Live vote/view updates for anyone with this case open, without polling.
+          channel = supabase
+            .channel(`case-${next.id}`)
+            .on(
+              'postgres_changes',
+              { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${next.id}` },
+              (payload) => setItem(payload.new as CaseRow)
+            )
+            .subscribe();
         }
       }
       setUser(userResult.data.user ?? null);
@@ -47,6 +63,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       showToast('Case filed. Share it to get real votes.', 'success');
       window.history.replaceState({}, '', window.location.pathname);
     }
+
+    return () => {
+      if (channel) getSupabase().removeChannel(channel);
+    };
   }, [slug]);
 
   const total = useMemo(() => (item?.for_votes ?? 0) + (item?.against_votes ?? 0), [item]);
@@ -70,7 +90,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       showToast(voteError.message, 'error');
     } else {
       setVoted(choice);
-      const { data: refreshed } = await supabase.from('cases').select('id,slug,owner_id,title,argument,status,visibility,for_votes,against_votes,created_at').eq('id', item.id).single();
+      const { data: refreshed } = await supabase.from('cases').select(SELECT_COLUMNS).eq('id', item.id).single();
       if (refreshed) setItem(refreshed as CaseRow);
       const { data: result } = await supabase.rpc('get_case_verdict', { p_for: refreshed?.for_votes ?? item.for_votes, p_against: refreshed?.against_votes ?? item.against_votes });
       if (typeof result === 'string') setVerdict(result);
@@ -123,7 +143,10 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
     <main className="site">
       <DocketHeader user={user} currentPath={`/c/${slug}`} />
       <div className="shell section" style={{ maxWidth: 720 }}>
-        <p className="kicker">Case No. {item.slug}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+          <p className="kicker">Case No. {item.slug}</p>
+          <p className="faint mono" style={{ fontSize: 12 }}>{item.view_count} {item.view_count === 1 ? 'view' : 'views'}</p>
+        </div>
         <h1 className="display" style={{ fontSize: 'clamp(28px,4vw,40px)', marginTop: 8 }}>{item.title}</h1>
         {profile?.username && <p className="muted" style={{ marginTop: 8 }}>Filed by {profile.display_name || profile.username}</p>}
 
@@ -141,7 +164,7 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
         {error && <p className="error-text" role="alert">{error}</p>}
 
         <div className="docket" style={{ marginTop: 32 }}>
-          <span className="docket-tab">The verdict</span>
+          <span className="docket-tab">The verdict — live</span>
           <div className="docket-body">
             <h2 style={{ fontFamily: 'var(--font-fraunces)', fontSize: 24, margin: '0 0 12px' }}>{verdict || liveVerdict}</h2>
             {total > 0 && (
