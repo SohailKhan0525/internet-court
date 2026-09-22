@@ -1,12 +1,14 @@
 'use client';
 
-import { use, useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState, FormEvent } from 'react';
 import { getSupabase } from '../../../lib/supabase';
 import { useToast } from '../../components/Toast';
 import DocketHeader from '../../components/DocketHeader';
 
 type CaseRow = { id: string; slug: string; owner_id: string; title: string; argument: string; status: string; visibility: string; for_votes: number; against_votes: number; view_count: number; created_at: string };
 type ProfileRow = { username: string; display_name: string | null };
+type CommentRow = { id: string; body: string; created_at: string; author_id: string };
+type CommentAuthor = { username: string; display_name: string | null };
 
 const reasons = ['harassment', 'personal_data', 'threats', 'defamation', 'hate', 'spam', 'other'] as const;
 const SELECT_COLUMNS = 'id,slug,owner_id,title,argument,status,visibility,for_votes,against_votes,view_count,created_at';
@@ -25,6 +27,12 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
   const [reportReason, setReportReason] = useState<(typeof reasons)[number]>('spam');
   const [reportDetails, setReportDetails] = useState('');
   const [reportStatus, setReportStatus] = useState('');
+  const [comments, setComments] = useState<CommentRow[]>([]);
+  const [commentAuthors, setCommentAuthors] = useState<Record<string, CommentAuthor>>({});
+  const [isSupremeMember, setIsSupremeMember] = useState(false);
+  const [commentBody, setCommentBody] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
+  const [commentError, setCommentError] = useState('');
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -42,10 +50,27 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
           const { data } = await supabase.from('profiles').select('username,display_name').eq('id', next.owner_id).maybeSingle();
           setProfile(data as ProfileRow | null);
 
-          // Real view counter -- unconditional increment, no fabricated numbers.
-          void supabase.rpc('increment_case_view', { p_case_id: next.id });
+          const { data: commentRows } = await supabase.from('comments').select('id,body,created_at,author_id').eq('case_id', next.id).order('created_at', { ascending: true });
+          if (commentRows) {
+            setComments(commentRows as CommentRow[]);
+            const authorIds = [...new Set((commentRows as CommentRow[]).map((row) => row.author_id))];
+            if (authorIds.length > 0) {
+              const { data: authorRows } = await supabase.from('profiles').select('id,username,display_name').in('id', authorIds);
+              const map: Record<string, CommentAuthor> = {};
+              (authorRows ?? []).forEach((row: any) => { map[row.id] = { username: row.username, display_name: row.display_name }; });
+              setCommentAuthors(map);
+            }
+          }
 
-          // Live vote/view updates for anyone with this case open, without polling.
+          if (userResult.data.user) {
+            const { data: sub } = await supabase.from('subscriptions').select('status').eq('user_id', userResult.data.user.id).eq('plan_code', 'supreme_court').eq('status', 'active').maybeSingle();
+            setIsSupremeMember(!!sub);
+          }
+
+          // Live vote/view updates for anyone with this case open, without
+          // polling. Subscribe FIRST, then increment -- otherwise the
+          // increment's own UPDATE can land before this client is actually
+          // listening, and the viewer never sees their own view register.
           channel = supabase
             .channel(`case-${next.id}`)
             .on(
@@ -53,7 +78,27 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
               { event: 'UPDATE', schema: 'public', table: 'cases', filter: `id=eq.${next.id}` },
               (payload) => setItem(payload.new as CaseRow)
             )
-            .subscribe();
+            .on(
+              'postgres_changes',
+              { event: 'INSERT', schema: 'public', table: 'comments', filter: `case_id=eq.${next.id}` },
+              async (payload) => {
+                const row = payload.new as CommentRow;
+                setComments((current) => (current.some((c) => c.id === row.id) ? current : [...current, row]));
+                if (!commentAuthors[row.author_id]) {
+                  const { data: authorRow } = await supabase.from('profiles').select('username,display_name').eq('id', row.author_id).maybeSingle();
+                  if (authorRow) setCommentAuthors((current) => ({ ...current, [row.author_id]: authorRow as CommentAuthor }));
+                }
+              }
+            )
+            .subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                supabase.rpc('increment_case_view', { p_case_id: next.id }).then(() => {
+                  // Optimistic bump as a safety net: don't make the visible
+                  // count depend on a WebSocket round-trip completing.
+                  setItem((current) => (current ? { ...current, view_count: current.view_count + 1 } : current));
+                });
+              }
+            });
         }
       }
       setUser(userResult.data.user ?? null);
@@ -117,6 +162,23 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
       setError('We could not share this case. Please copy the URL from your browser.');
       showToast('We could not share this case. Please copy the URL from your browser.', 'error');
     }
+  }
+
+  async function submitComment(event: FormEvent) {
+    event.preventDefault();
+    setCommentError('');
+    if (!item) return;
+    setPostingComment(true);
+    const { error: commentErr } = await getSupabase().rpc('add_comment', { p_case_id: item.id, p_body: commentBody.trim() });
+    setPostingComment(false);
+    if (commentErr) {
+      setCommentError(commentErr.message);
+      showToast(commentErr.message, 'error');
+      return;
+    }
+    setCommentBody('');
+    showToast('Comment posted.', 'success');
+    // Realtime INSERT listener above will append it; no manual refetch needed.
   }
 
   async function submitReport() {
@@ -186,6 +248,49 @@ export default function CasePage({ params }: { params: Promise<{ slug: string }>
               </a>
             </div>
           </div>
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <h2 className="section-head" style={{ fontSize: 20, marginBottom: 16 }}>
+            Comments {comments.length > 0 && <span className="faint mono" style={{ fontSize: 13, fontWeight: 400 }}>({comments.length})</span>}
+          </h2>
+
+          {comments.length === 0 && <p className="muted" style={{ fontSize: 14 }}>No comments yet.</p>}
+
+          <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
+            {comments.map((comment) => {
+              const author = commentAuthors[comment.author_id];
+              return (
+                <div className="docket" key={comment.id}>
+                  <div className="docket-body" style={{ padding: 16 }}>
+                    <p className="mono" style={{ fontSize: 11, color: 'var(--ink-faint)', margin: '0 0 6px' }}>
+                      {author ? (author.display_name || author.username) : 'Court member'} · {new Date(comment.created_at).toLocaleString()}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{comment.body}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {isSupremeMember ? (
+            <form onSubmit={submitComment}>
+              <div className="field">
+                <label htmlFor="comment-body">Add a comment</label>
+                <textarea id="comment-body" required maxLength={1000} value={commentBody} onChange={(event) => setCommentBody(event.target.value)} style={{ minHeight: 80 }} />
+              </div>
+              {commentError && <p className="error-text" role="alert">{commentError}</p>}
+              <button className="btn" type="submit" disabled={postingComment}>{postingComment ? 'Posting…' : 'Post comment'}</button>
+            </form>
+          ) : (
+            <div className="docket">
+              <span className="docket-tab">Supreme Court</span>
+              <div className="docket-body">
+                <p style={{ margin: '0 0 12px', fontSize: 14 }}>Commenting is a Supreme Court membership feature — $7/mo.</p>
+                <a className="btn btn-outline" href="/pricing">Upgrade to comment</a>
+              </div>
+            </div>
+          )}
         </div>
 
         <details style={{ marginTop: 32 }}>

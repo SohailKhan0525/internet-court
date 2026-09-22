@@ -153,3 +153,54 @@ h2.section-head{font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0 0 12px}
   .header-link{padding:8px}
 }
 
+
+/* Achievement seals — an original interaction, not copied from any reference:
+   on hover, the card lifts like paper coming off the page and a soft light
+   sweep crosses it once, echoing how light catches an embossed wax seal. */
+.badge-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px}
+@media(min-width:600px){.badge-grid{grid-template-columns:repeat(5,1fr)}}
+
+.badge-seal{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:16px 10px;
+  border-radius:2px;
+  overflow:hidden;
+  cursor:default;
+  transition:transform 200ms cubic-bezier(.34,1.56,.64,1),box-shadow 200ms ease,border-color 200ms ease;
+}
+.badge-seal-earned{
+  border:1px solid var(--ink);
+  background:#f8f7f3;
+}
+.badge-seal-locked{
+  border:1px dashed var(--paper-line);
+  background:transparent;
+}
+.badge-seal-earned:hover{
+  transform:translateY(-3px);
+  box-shadow:4px 6px 0 var(--paper-line);
+}
+.badge-seal-icon{color:var(--ink)}
+.badge-seal-locked .badge-seal-icon{color:var(--ink-faint)}
+.badge-seal-label{
+  font-family:var(--font-plex-mono);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  text-align:center;
+  color:var(--ink);
+}
+.badge-seal-locked .badge-seal-label{color:var(--ink-faint)}
+
+.badge-seal-shine{
+  position:absolute;
+  top:0; left:-60%;
+  width:40%; height:100%;
+  background:linear-gradient(115deg, transparent, rgba(255,255,255,.55), transparent);
+  transform:skewX(-18deg);
+  pointer-events:none;
+  transition:left 550ms cubic-bezier(.22,.9,.3,1);
+}
+.badge-seal-earned:hover .badge-seal-shine{left:130%}

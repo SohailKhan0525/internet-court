@@ -15,27 +15,14 @@ const ICONS: Record<string, Icon> = {
 export default function BadgeGrid({ badges }: { badges: Badge[] }) {
   if (badges.length === 0) return null;
   return (
-    <div
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5"
-      style={{ marginTop: 20 }}
-      aria-label="Achievements"
-    >
+    <div className="badge-grid" aria-label="Achievements">
       {badges.map((badge) => {
         const IconComponent = ICONS[badge.code] ?? SealCheck;
         return (
-          <div
-            key={badge.code}
-            title={badge.description}
-            className={`flex flex-col items-center gap-2 rounded-sm border p-3 text-center transition-opacity ${
-              badge.earned
-                ? 'border-[#1a1a1a] bg-[#f8f7f3] opacity-100'
-                : 'border-[#e4e2dc] bg-transparent opacity-40'
-            }`}
-          >
-            <IconComponent size={22} weight={badge.earned ? 'fill' : 'thin'} color={badge.earned ? '#1a1a1a' : '#8a8880'} />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-wide" style={{ color: badge.earned ? '#1a1a1a' : '#8a8880' }}>
-              {badge.label}
-            </span>
+          <div key={badge.code} title={badge.description} className={`badge-seal ${badge.earned ? 'badge-seal-earned' : 'badge-seal-locked'}`}>
+            <span className="badge-seal-shine" aria-hidden="true" />
+            <IconComponent size={22} weight={badge.earned ? 'fill' : 'thin'} className="badge-seal-icon" />
+            <span className="badge-seal-label">{badge.label}</span>
           </div>
         );
       })}

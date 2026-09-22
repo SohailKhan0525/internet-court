@@ -20,7 +20,7 @@ const plans = [
     name: 'Supreme Court',
     price: '$7',
     description: 'For people who want the highest membership tier in Internet Court.',
-    features: ['Everything in Jury Member', 'Supreme Court membership tier', 'Membership badge', 'Priority tier recognition'],
+    features: ['Everything in Jury Member', 'Comment on any public case', 'Supreme Court membership tier', 'Membership badge'],
   },
 ] as const;
 
@@ -109,9 +109,9 @@ export default function PricingPage() {
               { label: 'File private cases', values: [false, true, true] },
               { label: 'File unlisted cases (link-only)', values: [false, true, true] },
               { label: 'Membership badge on your profile', values: [false, true, true] },
-              { label: 'Supreme Court tier recognition', values: [false, false, true] },
+              { label: 'Comment on public cases', values: [false, false, true] },
             ]}
-            caption="Jury Member and Supreme Court unlock the exact same private/unlisted case abilities — Supreme Court is a visible status tier on top, not extra functionality. If that's not worth $4/mo more to you, Jury Member does everything you need."
+            caption="Jury Member and Supreme Court share the same private/unlisted case abilities. Supreme Court's real difference is the ability to comment on any public case — if you don't need that, Jury Member covers everything else."
           />
         </div>
       </main>
