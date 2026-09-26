@@ -204,3 +204,6 @@ h2.section-head{font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0 0 12px}
   transition:left 550ms cubic-bezier(.22,.9,.3,1);
 }
 .badge-seal-earned:hover .badge-seal-shine{left:130%}
+
+.highlights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+@media(max-width:900px){.highlights-grid{grid-template-columns:1fr;gap:24px}}

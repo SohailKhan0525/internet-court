@@ -24,6 +24,21 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] as string));
 }
 
+function emailShell(bodyHtml: string) {
+  return `
+  <div style="background:#fdfdfb;padding:32px 16px;font-family:Georgia,serif;">
+    <div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #e4e2dc;border-radius:4px;overflow:hidden;">
+      <div style="padding:20px 24px;border-bottom:1px solid #e4e2dc;">
+        <span style="font-size:20px;vertical-align:middle;">\u2696\uFE0F</span>
+        <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em;color:#1a1a1a;vertical-align:middle;margin-left:8px;">INTERNET COURT</span>
+      </div>
+      <div style="padding:24px;font-size:15px;line-height:1.6;color:#1a1a1a;">
+        ${bodyHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -49,8 +64,14 @@ Deno.serve(async (req: Request) => {
         from: FROM_ADDRESS,
         to: [SUPPORT_INBOX],
         reply_to: email,
-        subject: `Internet Court contact form: ${name}`,
-        html: `<p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`,
+        subject: `[Contact] ${name} \u2014 Internet Court`,
+        html: emailShell(`
+          <p style="margin:0 0 4px;font-size:13px;color:#6b6b66;">New contact form submission</p>
+          <p style="margin:0 0 16px;"><strong>${escapeHtml(name)}</strong> &lt;${escapeHtml(email)}&gt;</p>
+          <p style="margin:0 0 20px;white-space:pre-wrap;">${escapeHtml(message)}</p>
+          <p style="margin:0;padding-top:16px;border-top:1px dashed #e4e2dc;font-size:12px;color:#8a8880;">Reply directly to this email to respond to ${escapeHtml(name)} \u2014 it goes straight to them.</p>
+        `),
+        text: `New contact form submission\n\nFrom: ${name} <${email}>\n\n${message}\n\n---\nReply directly to this email to respond to ${name} — it goes straight to them.`,
       }),
     });
 

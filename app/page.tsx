@@ -8,12 +8,25 @@ import { ArrowRight } from '@phosphor-icons/react';
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
+  type HighlightRow = { slug: string; title: string; for_votes: number; against_votes: number; view_count: number; comment_count: number };
+  const [highlights, setHighlights] = useState<{ popular: HighlightRow[]; trending: HighlightRow[]; most_commented: HighlightRow[] }>({ popular: [], trending: [], most_commented: [] });
 
   useEffect(() => {
     const supabase = getSupabase();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    getSupabase().rpc('get_homepage_case_highlights').then(({ data }) => {
+      if (!data) return;
+      const grouped: { popular: HighlightRow[]; trending: HighlightRow[]; most_commented: HighlightRow[] } = { popular: [], trending: [], most_commented: [] };
+      (data as (HighlightRow & { category: 'popular' | 'trending' | 'most_commented' })[]).forEach((row) => {
+        grouped[row.category].push(row);
+      });
+      setHighlights(grouped);
+    });
   }, []);
 
   const faqStructuredData = {
@@ -84,6 +97,39 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <hr className="rule shell" />
+
+        {highlights.popular.length > 0 && (
+          <section className="shell section">
+            <p className="kicker">On the docket now</p>
+            <h2 className="section-head" style={{ marginTop: 8, marginBottom: 24 }}>What people are voting on.</h2>
+            <div className="highlights-grid">
+              {(['popular', 'trending', 'most_commented'] as const).map((category) => {
+                const rows = highlights[category];
+                if (rows.length === 0) return null;
+                const heading = category === 'popular' ? 'Most voted' : category === 'trending' ? 'Trending' : 'Most commented';
+                return (
+                  <div key={category}>
+                    <p className="mono" style={{ fontSize: 11, color: 'var(--ink-faint)', marginBottom: 10, letterSpacing: '.04em', textTransform: 'uppercase' }}>{heading}</p>
+                    <div style={{ display: 'grid', gap: 10 }}>
+                      {rows.map((row) => (
+                        <a className="docket" href={`/c/${row.slug}`} key={`${category}-${row.slug}`} style={{ display: 'block' }}>
+                          <div className="docket-body" style={{ padding: 14 }}>
+                            <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>{row.title}</p>
+                            <p className="faint mono" style={{ fontSize: 11, margin: 0 }}>
+                              {row.for_votes + row.against_votes} votes · {row.view_count} views{row.comment_count > 0 ? ` · ${row.comment_count} comments` : ''}
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <hr className="rule shell" />
 
