@@ -3,11 +3,12 @@ import { Fraunces, Inter, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from './components/Toast';
 import RealtimeNotices from './components/RealtimeNotices';
+import { Analytics } from '@vercel/analytics/next';
 
 const fraunces = Fraunces({ subsets: ['latin'], display: 'swap', variable: '--font-fraunces', weight: ['500', '600', '700'] });
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
 const plexMono = IBM_Plex_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-plex-mono', weight: ['400', '600'] });
-const siteUrl = 'https://loopproof.me';
+const siteUrl = 'https://www.loopproof.me';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <RealtimeNotices />
           {children}
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );
