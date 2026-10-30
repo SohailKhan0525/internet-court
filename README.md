@@ -1,22 +1,21 @@
 # Internet Court
 
-Someone is wrong. Probably you.
+A fresh landing page for the court of public opinion. Built with semantic HTML, CSS, and JavaScript; no runtime dependencies.
 
-Internet Court is a public argument court where people submit a case, strangers vote, and the case receives a real verdict.
+## Run
 
-## Product principles
+- `npm run check` checks JavaScript syntax.
+- `npm run build` creates the deployable `dist/` directory.
+- Serve `dist/` with any static HTTP server. Vercel configuration is included.
 
-- Real users and real votes only.
-- No seeded activity or fabricated social proof.
-- Public case URLs are the viral artifact.
-- Authentication and authorization are handled by Supabase.
-- Paid access is handled by PayPal and confirmed by verified server webhooks.
-- Production database changes are versioned migrations.
+## Preview behavior
 
-## Status
+The three example cases are fictional and explicitly labeled. Votes are browser-local demo choices, not public vote totals. The case dialog saves a private draft to local storage and can download it as a text file. No backend, authentication, payment, public submission, or community voting is connected. The earlier application is preserved in `backup/pre-unslop-2026-10-30` and Git history.
 
-The repository is being built for production. Features are enabled only when their underlying service and security controls are actually configured.
+Native dialogs support Escape, focus trapping, and return focus. Case tabs support arrow keys, Home, and End. Forms validate input, storage failures produce useful feedback, and the layout adapts to small screens. Animations respect reduced-motion settings.
 
-## Security
+## Design and attribution
 
-See `SECURITY.md` for reporting and security expectations.
+Designed using [Unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The skill is installed in the user's skills and its design process is documented in `DESIGN.md`.
+
+The gavel-and-pizza illustration was generated for this project with OpenAI's built-in image generation tool. Fonts are Fraunces and DM Sans from Google Fonts. The production canonical URL remains `https://www.loopproof.me/`, matching the existing Vercel domain configuration.
