@@ -1,3 +1,5 @@
+// Adapted from Unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+// Adds the user-supplied landscape reference's 7.77s timing and live layout bounds.
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -49,9 +51,10 @@ if (steps.length === 0) {
 const [frameX = 0, frameY = 0, frameWidth = 960] = (meta("unslop-frame") ?? "0 0 960").split(/\s+/).map(Number);
 const kindOf = (text) => (/spac/i.test(text) ? "spacing" : /detail|radius|corner/i.test(text) ? "details" : null);
 
-const FRAME = wide ? { width: 1920, height: 1080 } : { width: 1080, height: 1080 };
+const reference = meta("unslop-reference") === "landscape-8s";
+const FRAME = wide || reference ? { width: 1920, height: 1080 } : { width: 1080, height: 1080 };
 const PAGE_WIDTH = 1440;
-const MARGIN = 72;
+const MARGIN = reference ? 0 : 72;
 const VIEW = 0.75;
 const scale = (FRAME.width - MARGIN) / frameWidth;
 const offsetX = MARGIN / scale - frameX;
@@ -86,6 +89,11 @@ const stage = `<!doctype html><html><head><meta charset="utf-8"><style>
   #story-layer .s-box { border: 1.5px solid #ff4d6a; background: rgba(255,77,106,0.07); transform: scale(1.03); transition: opacity 220ms ease, transform 260ms ease, border-color 300ms ease, background-color 300ms ease; }
   #story-layer.s-on .s-box { transform: scale(1); }
   #story-layer.s-fixed .s-box { border-color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.04); }
+  ${reference ? `#story-layer.s-fixed .s-ink { background: #74dc9b; }
+  #story-layer.s-fixed .s-hair { background: rgba(116,220,155,.45); }
+  #story-layer.s-fixed .s-fill { background: rgba(116,220,155,.08); }
+  #story-layer.s-fixed .s-box { border-color: #74dc9b; background: rgba(116,220,155,.04); }
+  #story-layer.s-fixed .s-corner { border-color: #74dc9b; }` : ""}
   #story-layer .s-corner { width: 8px; height: 8px; background: #fff; border: 1px solid #ff4d6a; }
   .credit { position: absolute; right: 28px; bottom: 24px; z-index: 20; padding: 7px 12px; border-radius: 999px; font: 500 15px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.01em; color: rgba(255,255,255,0.86); background: rgba(12,12,14,0.62); box-shadow: 0 0 0 1px rgba(255,255,255,0.1); backdrop-filter: blur(8px); }
   iframe { position: absolute; left: ${left}px; top: ${top}px; border: 0; width: ${pageWidth}px; height: ${pageHeight}px; transform-origin: 0 0; transform: scale(${scale}); background: transparent; }
@@ -260,7 +268,22 @@ const runtime = `
     };
   }
 
-  const kinds = { audit, spacing, details };
+  function bounds() {
+    const items = [...document.querySelectorAll("[data-bounds]")].filter((el) => box(el).bottom > 0 && box(el).top < innerHeight).map((el) => {
+      const wrap = put("s-fade", {}, '<div class="s-box" style="position:absolute;inset:0"></div>' +
+        [["left", "top"], ["right", "top"], ["left", "bottom"], ["right", "bottom"]].map(([x,y]) => '<span class="s-corner" style="position:absolute;' + x + ':-4px;' + y + ':-4px"></span>').join(""));
+      return {el, wrap, tag:put("s-tag s-fade",{})};
+    });
+    return () => {
+      for (const {el,wrap,tag} of items) {
+        const b=box(el);
+        Object.assign(wrap.style,rect(b.left-4,b.top-4,b.width+8,b.height+8));
+        Object.assign(tag.style,{left:sx(b.left)+"px",top:sy(b.bottom)+12+"px"});
+        tag.textContent=Math.round(b.width)+" × "+Math.round(b.height);
+      }
+    };
+  }
+  const kinds = { audit, spacing, details, bounds };
   const managed = new WeakMap();
   let current = null;
   let stepping = false;
@@ -361,7 +384,7 @@ await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = `http://127.0.0.1:${server.address().port}`;
 
 const FPS = 60;
-const LENGTH = 10;
+const LENGTH = reference ? 7.75 : 10;
 const frames = join(root, ".story-frames");
 if (!play) {
   rmSync(frames, { recursive: true, force: true });
@@ -405,6 +428,23 @@ try {
   const plan = [];
   const at = (time, run) => plan.push({ time, run });
   let cursor = 0.5;
+  if (reference) {
+    at(0.08, call("show", "spacing"));
+    at(0.45, call("step", 1));
+    at(1.25, call("settle"));
+    at(1.70, call("clear"));
+    at(1.90, call("show", "bounds"));
+    at(2.10, call("step", 2));
+    at(2.70, call("step", 3));
+    at(3.15, call("settle"));
+    at(3.65, call("clear"));
+    at(4.00, call("step", 4));
+    at(4.45, call("show", "details"));
+    at(4.75, call("step", 5));
+    at(5.95, call("settle"));
+    at(6.65, call("clear"));
+    total = LENGTH;
+  } else {
   if (slop) {
     at(cursor, call("show", "audit"));
     at(cursor + 0.9, call("clear"));
@@ -425,6 +465,7 @@ try {
     cursor += blocks[index] * fit;
   });
   total = cursor + 1.6;
+  }
   plan.sort((a, b) => a.time - b.time);
 
   if (play) {
@@ -456,7 +497,7 @@ try {
 }
 if (play) process.exit(0);
 
-execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(frames, "f-%05d.jpg"), "-vf", `scale=${FRAME.width * 2}:${FRAME.height * 2}:flags=lanczos`, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "slow", "-movflags", "+faststart", resolve(out)]);
+execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", String(FPS), "-i", join(frames, "f-%05d.jpg"), "-vf", `scale=${FRAME.width * 2}:${FRAME.height * 2}:flags=lanczos:in_range=pc:out_range=tv`, "-color_range", "tv", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "slow", "-movflags", "+faststart", resolve(out)]);
 rmSync(frames, { recursive: true, force: true });
 console.log(`saved ${resolve(out)}, ${steps.length} steps, ${total.toFixed(1)}s`);
 

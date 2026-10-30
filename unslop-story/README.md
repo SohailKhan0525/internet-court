@@ -1,20 +1,21 @@
-# Internet Court — Unslop story
+# Internet Court — Unslop story, second edition
 
-A 9.2-second before-and-after animation of the Internet Court landing page, rendered with [Unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)). Unslop and its renderer are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The on-screen credit is retained.
+A 7.77-second widescreen before-and-after animation following the pacing of the reference video supplied by the user. It morphs the previous cream page into the new charcoal-and-brass landing page.
 
-The opening frame reconstructs the original hero from commit `4e91aa6d10e0835d2729a1578c3bee37d622797c`. Four cumulative passes animate the same page elements: spacing, color, type and copy, then the case-file details and courtroom illustration. This is a presentation, separate from the production landing page and its browser-local demo.
+Made with [Unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). `render.mjs` adapts the upstream renderer: it adds a reference timeline, widescreen framing, and live layout-selection measurements. The original wave transitions, text rolls, spacing measurements, radius outlines, and on-screen credit remain.
 
 ## Render
 
-Install Node.js 20+, FFmpeg, and Playwright with Chromium. From the repository root:
+Install Node.js 20+, FFmpeg, Playwright, and Chromium, then run from the repository root:
 
 ```sh
 npm install --no-save playwright
 npx playwright install chromium
-node unslop-story/render.mjs unslop-story/story.html internet-court-unslop-master.mp4
-ffmpeg -i internet-court-unslop-master.mp4 -vf scale=1080:1080:flags=lanczos -c:v libx264 -pix_fmt yuv420p -crf 18 -preset medium -movflags +faststart internet-court-unslop.mp4
+node unslop-story/render.mjs unslop-story/story.html internet-court-unslop-v2.mp4 --wide
 ```
 
-The master is 2160 × 2160 at 60 fps. The social export is 1080 × 1080 at 60 fps, H.264 MP4, with no audio. Add music in your posting app if desired. The renderer needs internet access for the fonts in `story.html`.
+The reference metadata selects a 3840 × 2160, 60 fps H.264 master of 466 frames (7.7667 seconds). A smaller 1920 × 1080 sharing export can be produced with FFmpeg. There is no audio, matching the supplied reference.
 
-`render.mjs` is the upstream Unslop story renderer, unchanged. It reads `unslop-steps` and `unslop-frame`, animates `.s1` through `.s4`, and generates the moving measurements, letter transitions, radius outlines, and credit. Keep all three input files together when rendering.
+Five cumulative passes alter the same DOM: spacing, layout, color, type and copy, then details and the visual. Six text swaps are used. The final scene and product preview are built from the production page; the opening frame reconstructs the prior hero with its original styles. The runtime is presentation-only and is excluded from the production build.
+
+Keep `story.html`, `render.mjs`, `courtroom.webp`, and `justice-scene.webp` together. The story loads the same public Google Fonts as the page. Keep the creator credit in derivative videos.
