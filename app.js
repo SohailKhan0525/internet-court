@@ -5,6 +5,21 @@ const cases = [
   { title: 'The people vs. the café camper', argument: '“I bought a coffee, found a table, and worked for four hours. The café had empty seats. A friend says I should have ordered more. I thought the coffee came with a place to sit.”', other: '“A café isn’t a free coworking space. One drink shouldn’t buy you a whole afternoon.”', question: 'Should the café camper order more?', yes: 'Yes, another round', no: 'No, seats were free' }
 ];
 const storageKeys = { votes: 'internet-court-demo-votes-v1', draft: 'internet-court-draft-v1' };
+const previews = [
+  { category: 'Roommates', argument: '“It was in the fridge for two days. At that point, it’s abandoned property.”', yes: 'The roommate', no: 'The pizza thief' },
+  { category: 'Relationships', argument: '“They fell asleep. I watched two more episodes. I even offered to rewatch them.”', yes: 'The sleepy partner', no: 'The binge watcher' },
+  { category: 'Everyday etiquette', argument: '“One coffee. Four hours. Plenty of empty tables. I don’t see the problem.”', yes: 'The café', no: 'The customer' }
+];
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+function enter(element, duration = 360, distance = 8) {
+  if (motionPreference.matches || !element?.animate) return;
+  element.getAnimations().forEach(animation => animation.cancel());
+  element.animate([{ opacity: 0, transform: `translateY(${distance}px)` }, { opacity: 1, transform: 'translateY(0)' }], { duration, easing: 'cubic-bezier(.22,1,.36,1)' });
+}
+function verdictMotion() {
+  enter(document.querySelector('.preview-verdict'), 400, 6);
+  enter(document.querySelector('.verdict-stamp'), 400, 6);
+}
 function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
 function writeStorage(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } }
 const storedVotes = readStorage(storageKeys.votes, {});
@@ -16,6 +31,9 @@ function renderVote() {
   document.querySelector('.vote-buttons').hidden = hasVote;
   document.querySelector('.vote-result').hidden = !hasVote;
   if (hasVote) document.getElementById('vote-result-text').textContent = `You voted “${cases[currentCase][choice]}”. This is your demo vote, not a community verdict.`;
+  document.querySelector('.preview-vote-buttons').hidden = hasVote;
+  document.querySelector('.preview-verdict').hidden = !hasVote;
+  if (hasVote) document.getElementById('preview-verdict-text').textContent = `You sided with ${previews[currentCase][choice].toLowerCase()}`;
 }
 function selectCase(index, moveFocus = false) {
   currentCase = index;
@@ -29,9 +47,32 @@ function selectCase(index, moveFocus = false) {
   document.getElementById('vote-question').textContent = item.question;
   document.getElementById('yes-label').textContent = item.yes;
   document.getElementById('no-label').textContent = item.no;
+  document.querySelectorAll('[data-preview-case]').forEach(button => { const active = Number(button.dataset.previewCase) === index; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); });
+  document.querySelector('.preview-case-number').textContent = `Case 00${index + 1}`;
+  document.getElementById('preview-title').textContent = item.title;
+  document.querySelector('.case-kind').textContent = previews[index].category;
+  document.getElementById('preview-argument').textContent = previews[index].argument;
+  document.getElementById('preview-other').textContent = item.other;
+  document.querySelector('[data-preview-vote="yes"]').textContent = previews[index].yes;
+  document.querySelector('[data-preview-vote="no"]').textContent = previews[index].no;
   renderVote();
+  enter(document.querySelector('.preview-case'));
+  enter(document.getElementById('case-panel'));
   if (moveFocus) document.getElementById(`case-tab-${index}`).focus();
 }
+document.querySelectorAll('[data-preview-case]').forEach(button => button.addEventListener('click', () => selectCase(Number(button.dataset.previewCase))));
+document.querySelectorAll('[data-preview-vote]').forEach(button => button.addEventListener('click', () => {
+  votes[currentCase] = button.dataset.previewVote;
+  const saved = writeStorage(storageKeys.votes, votes);
+  renderVote(); verdictMotion();
+  if (!saved) document.getElementById('preview-verdict-text').textContent += ' · this visit only';
+  document.getElementById('preview-change-vote').focus();
+}));
+document.getElementById('preview-change-vote').addEventListener('click', () => {
+  delete votes[currentCase]; writeStorage(storageKeys.votes, votes); renderVote();
+  enter(document.querySelector('.preview-vote-buttons'), 300, 6);
+  document.querySelector('[data-preview-vote="no"]').focus();
+});
 document.querySelectorAll('[data-case]').forEach(tab => {
   tab.addEventListener('click', () => selectCase(Number(tab.dataset.case)));
   tab.addEventListener('keydown', event => {
@@ -48,6 +89,7 @@ document.querySelectorAll('[data-vote]').forEach(button => button.addEventListen
   votes[currentCase] = button.dataset.vote;
   const saved = writeStorage(storageKeys.votes, votes);
   renderVote();
+  verdictMotion();
   if (!saved) document.getElementById('vote-result-text').textContent += ' Browser storage is unavailable, so this vote will reset when you leave.';
   document.getElementById('change-vote').focus();
 }));
@@ -78,10 +120,10 @@ function openDraft(button) {
     if (saved && typeof saved.title === 'string' && typeof saved.story === 'string') { titleInput.value = saved.title.slice(0, 100); storyInput.value = saved.story.slice(0, 3000); if ([...categoryInput.options].some(option => option.value === saved.category)) categoryInput.value = saved.category; status.textContent = 'Your saved draft is ready to edit'; deleteDraftButton.hidden = false; }
     draftLoaded = true;
   }
-  updateCount(); closeMenu(); draftDialog.showModal();
+  updateCount(); closeMenu(); draftDialog.showModal(); enter(draftDialog, 360, 12);
 }
 document.querySelectorAll('[data-open-draft]').forEach(button => button.addEventListener('click', () => openDraft(button)));
-document.querySelector('[data-open-privacy]').addEventListener('click', event => { lastOpener = event.currentTarget; privacyDialog.showModal(); });
+document.querySelector('[data-open-privacy]').addEventListener('click', event => { lastOpener = event.currentTarget; privacyDialog.showModal(); enter(privacyDialog, 360, 12); });
 document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(dialog => { dialog.addEventListener('close', () => lastOpener?.focus()); dialog.addEventListener('click', event => { if (event.target !== dialog) return; const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); }); });
 storyInput.addEventListener('input', updateCount);
