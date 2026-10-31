@@ -1,47 +1,57 @@
-# Internet Court — Unslop redesign
+# Internet Court design study
 
-Built with [Unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), CC BY 4.0. The previous cream-and-burgundy version and first story remain in Git history. This revision responds to the user's supplied 7.77-second, 3840 × 2156, 60 fps reference video.
+Built using the updated `premium-next-react` skill, including its visitor-intent, token, state, motion, and quality references.
 
-## Audit
+## Purpose and page role
 
-- The previous hero paired a large three-line serif headline with a small engraving and a paper card; the illustration and product did not read as one scene.
-- The previous video showed too much of the page in a square crop, leaving the meaningful changes too small.
-- The live page had hover feedback but almost no visible entrance or interaction animation.
-- The paper card repeated the same example later in the page without letting visitors use it immediately.
-- The mixed serif hierarchy, repeated labels, and large empty areas made the page feel more like a document than an internet product.
-- Hidden line breaks needed explicit spaces for readable mobile copy.
+A playful editorial homepage, reached through a shared demo link. The visitor needs to understand the premise, inspect a fictional disagreement, and make a private judgement. Secondary intent: try writing a harmless case draft. Cases are fictional; the experience has no legal powers or public community data.
 
 ## Direction
 
-1. **Product:** a court of public opinion for people arguing about everyday, low-stakes disagreements.
-2. **Character:** wry, decisive, theatrical.
-3. **World:** a quiet courtroom after hours, charcoal surroundings, brass scales, evidence and receipts.
-4. **Moments:** a large brass scale weighing a pizza slice against a note; a working case preview rising below the hero.
-5. **Signature:** evidence labels tied to the scene and yes/no characters forming the scale's surface.
+Two compositions were considered: a dense newspaper docket and a sculptural courtroom poster. The selected direction combines a spacious poster-like introduction with an editorial case index. The subject supplies its identity: gavel, docket numbers, exhibits, testimony, verdicts, and a deliberately low-stakes voice.
 
-## Nine passes
+Warm paper, dark olive ink, and acid green carry the composition. Libre Caslon Display provides an expressive headline voice; DM Sans handles navigation, controls, and reading. The hero's original shaded SVG gavel provides depth without loading a 3D engine. Case illustrations express the actual disputes.
 
-1. **Spacing:** a 1280px content area, 4px rhythm, 112px hero offset, 24–32px content grouping, and consistent control heights. Mobile stacks the copy, scene, and preview.
-2. **Color:** charcoal surfaces, three readable text roles, warm brass as the limited accent, and quiet white primary controls. The richness stays in the scene.
-3. **Icons:** the existing line-icon system, one stroke weight; no decorative emoji.
-4. **Copy:** “Your group chat needs a jury” names the audience and reason to use the product. Fictional cases and local-only votes remain labeled.
-5. **Type:** Instrument Sans at 400–500, with size and contrast establishing hierarchy. No all-caps tracking or italic emphasis.
-6. **Layout:** a full-width scene with text in its calm left half, followed by an interactive product preview. The remaining how-to, docket, comparison, questions, and closing content retains its order.
-7. **Details:** matched 8px controls and 12px panels, explicit focus states, real two-sided case content, keyboard-operable tabs, and accessible native dialogs.
-8. **Visuals:** a custom generated brass scale scene, then a canvas glyph treatment using yes/no characters. Pixel data is read once; the finished layer is cached and never continuously redrawn.
-9. **Motion:** one staggered hero entrance; evidence labels appear in sequence; selected cases enter over 360ms; votes acknowledge the choice over 400ms; dialogs rise over 360ms; menus and FAQ content use short fade/rise transitions. One easing curve, transform/opacity feedback, no parallax, no fake live pulses, and no perpetual loops. Reduced-motion mode removes animations and shows the original static scene.
+No testimonial strips, pricing tables, invented community counts, forced intro, custom cursor, or scroll interception are needed.
 
-## Image asset and prompt
+## Token contract
 
-Asset: `assets/justice-scene.webp`, generated with OpenAI's built-in image tool; source image 1672 × 941. Exported as WebP for the site.
+| Role | Implementation | Review target |
+| --- | --- | --- |
+| Display/section type | Libre Caslon Display, fluid limits and compact leading | Long headings and narrow viewports |
+| Reading/controls | DM Sans Variable | Labels, testimony, form fields |
+| Canvas/ink/quiet/action | `--paper`, `--ink`, `--muted`, `--acid` | Actual text pairs and active controls |
+| Layout | `--gutter`, `--section-space`, bounded `.shell` | Mobile reading order and wide composition |
+| Shape | Circular controls, compact file corners, one cutaway hero corner | Clear role differences |
+| Feedback | Named success/error colors and visible focus | Keyboard and blocked storage |
 
-Prompt: “One elegant sculptural brass balance scale is weighing a single small realistic pepperoni pizza slice in the left hanging pan against a folded cream paper note in the right hanging pan. The balance is very slightly tilted. Strong realistic silhouette: central turned brass stem, beautiful slim symmetrical crossbar and two delicate chains per pan, matte black circular pedestal. Refined brushed warm brass, a little patina, soft warm rim lighting, restrained charcoal reflections, soft contact shadow. Subject fills the right half of a wide 16:9 composition; the left 45% is calm empty dark charcoal #101110 for HTML copy. The lower 15% is calm and dark for a coded product preview. Crisp studio product photography and cinematic still life. No ornamental filigree, colored haze, spotlight circle, blue or purple, decorative glows, grain, text, logos, UI, badges, or watermark.”
+## Motion contract
+
+| Trigger | Change and purpose | Rest/reduced motion |
+| --- | --- | --- |
+| Call court to order | Finite gavel swing/impact, initiated by the visitor | Full static illustration; no loop |
+| Case filter | Shared selection marker; layout continuity | Immediate selection and stable content |
+| Case hover | Small drawing/arrow response | Visible focus and click/tap work independently |
+| Confirmation | Brief status appearance | Immediate readable status |
+
+Core copy never starts at opacity zero. Native scrolling remains intact. There are no autoplay videos, WebGL loops, or tracking requests.
+
+## Interaction states
+
+| Component | States | Recovery |
+| --- | --- | --- |
+| Navigation | Rest, hover, focus, anchor location, mobile open | Escape closes mobile navigation; real anchors |
+| Case dialog | Open, close, no verdict, selected verdict, changed verdict | Native modal keyboard behavior and focus return |
+| Votes | Unsaved selection, browser-persisted, storage unavailable | Selection works for the visit if storage is blocked |
+| Case draft | Editing, invalid, saved, storage unavailable | Keep text, focus invalid field, offer download |
+| Unknown URL | Branded recovery view | Return to homepage |
 
 ## Verification
 
-- JavaScript syntax and static production build pass.
-- Desktop composition and 390px phone layout visually reviewed; the mobile body does not overflow horizontally.
-- Preview case selection updates the full docket, with animated content and synchronized vote state.
-- Demo voting, changing votes, and private draft save/delete behavior checked in the browser.
-- Mobile navigation opens with the correct expanded state.
-- The story uses the same morphing page and six text swaps, not a slideshow of screenshots. Its renderer retains the required creator credit and follows the supplied reference's sequence and landscape duration.
+- TypeScript and production build run successfully.
+- Twelve node:test cases cover corrupted storage, invalid vote IDs/values, blocked/quota storage, draft truncation, and validation boundaries.
+- Source review checked modal focus, visible status inside native dialog, finite/reduced motion, direct URLs, and honest persistence copy.
+- Local browser QA was unavailable: `sites-preview` reported a missing preview-daemon mailbox. No screenshots, mobile interaction pass, Lighthouse score, or field performance pass are claimed.
+- The HTML includes an explicit JavaScript-disabled explanation, descriptive metadata, favicon, noindex for this private demo, and a generated static 404 entry.
+
+These are implementation records, not proof of visual quality or accessibility conformance.

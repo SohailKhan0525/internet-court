@@ -1,21 +1,40 @@
-# Internet Court
+# Internet Court — Premium React design demo
 
-A fresh landing page for the court of public opinion. Built with semantic HTML, CSS, and JavaScript; no runtime dependencies.
+An original editorial website for everyday disagreements, built with React, TypeScript, Vite, and Motion using [premium-next-react](https://github.com/SohailKhan0525/skills/tree/main/skills/premium-next-react).
+
+This demo lives on `demo/premium-next-react`. Existing branches, including `main`, were preserved.
 
 ## Run
 
-- `npm run check` checks JavaScript syntax.
-- `npm run build` creates the deployable `dist/` directory.
-- Serve `dist/` with any static HTTP server. Vercel configuration is included.
+```bash
+npm ci
+npm run dev
+```
 
-## Preview behavior
+```bash
+npm run check
+npm test
+npm run build
+```
 
-The three example cases are fictional and explicitly labeled. Votes are browser-local demo choices, not public vote totals. The case dialog saves a private draft to local storage and can download it as a text file. No backend, authentication, payment, public submission, or community voting is connected. The earlier application is preserved in `backup/pre-unslop-2026-10-30` and Git history.
+The static production output is `dist/`. Vercel configuration is included; the private Sites preview uses `.openai/hosting.json`. A matching `404.html` provides the app's recovery view on compatible static hosts. It is a client-rendered demo and requires JavaScript for interactions.
 
-Native dialogs support Escape, focus trapping, and return focus. Case tabs support arrow keys, Home, and End. Forms validate input, storage failures produce useful feedback, and the layout adapts to small screens. Animations respect reduced-motion settings.
+## Experience
+
+- Original dimensional SVG gavel with a finite, user-triggered Motion animation.
+- Responsive editorial typography, semantic design tokens, custom case illustrations, and native scrolling.
+- Case filters, complete claim/defence/evidence dialogs, personal verdicts, and verdict changes.
+- A validated private case draft with download and browser-storage recovery states.
+- Native modal dialogs, focus return, keyboard navigation, reduced-motion treatment, and local font files.
+
+All cases are fictional. Votes and drafts stay in this browser. There is no public submission, public vote total, authentication, analytics, or backend. A successful draft save means browser storage accepted it; the UI never claims public delivery.
 
 ## Design and attribution
 
-Designed using [Unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The skill is installed in the user's skills and its design process is documented in `DESIGN.md`.
+Read [DESIGN.md](DESIGN.md) for the direction, motion/state contracts, and verification record. All case narratives, SVG artwork, and styling in this branch are original. The skill's research notes credit the reference sources that informed its process.
 
-The brass balance-scale scene was generated for this project with OpenAI's built-in image generation tool. The interface uses Instrument Sans from Google Fonts. The hero combines the generated scene with a cached yes/no glyph layer, a single staggered entrance, and evidence labels. Case changes, votes, menus, and dialogs have explicit transition feedback; reduced-motion mode removes movement and shows the static scene. The production canonical URL remains `https://www.loopproof.me/`, matching the existing Vercel domain configuration.
+DM Sans and Libre Caslon Display are distributed under the SIL Open Font License; their notices are preserved in [public/licenses](public/licenses). React, Motion, Vite, and other packages retain their respective package licenses.
+
+## Validation
+
+The production build/type check and twelve persistence/validation tests pass. Local browser QA could not run because this workspace's managed preview daemon was unavailable. This is not a claim of verified WCAG conformance or measured Core Web Vitals.

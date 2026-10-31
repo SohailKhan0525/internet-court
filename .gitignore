@@ -1,5 +1,6 @@
-dist/
 node_modules/
-.openai/
-.vercel/
-.env*
+dist/
+.sites-runtime/
+*.tsbuildinfo
+.env
+.env.*
