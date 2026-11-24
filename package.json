@@ -1,1 +1,10 @@
-{"name":"internet-court","version":"1.1.0","private":true,"description":"A court of public opinion — landing page and browser-local demo","scripts":{"build":"node scripts/build.mjs","check":"node --check app.js && node --check scene.js && node --check scripts/build.mjs"},"engines":{"node":">=20"}}
+{
+  "name": "kaggle-gemini-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "scripts": { "test": "node --test" },
+  "dependencies": { "@vercel/blob": "2.9.0" },
+  "overrides": { "@vercel/cli-config": { "zod": "4.6.6" } }
+}

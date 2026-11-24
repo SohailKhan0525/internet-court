@@ -1,9 +1,24 @@
 {
-  "version": 2,
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install --ignore-scripts",
-  "cleanUrls": true,
-  "headers": [{"source":"/(.*)","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"key":"X-Frame-Options","value":"DENY"}]}]
+  "outputDirectory": "public",
+  "functions": {
+    "api/bridge.mjs": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/mcp", "destination": "/api/bridge" },
+    { "source": "/oauth/:path*", "destination": "/api/bridge" },
+    { "source": "/.well-known/:path*", "destination": "/api/bridge" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
 }
