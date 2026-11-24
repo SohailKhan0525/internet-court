@@ -59,6 +59,7 @@ async function begin(context, registration = {}) {
   });
   const consent = await oauth(request('/oauth/authorize?' + query), context);
   assert.equal(consent.status, 200);
+  assert.equal(consent.headers.get('referrer-policy'), 'strict-origin');
   const cookie = consent.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/i);
   assert.match(cookie, /Secure/i);
@@ -167,6 +168,30 @@ test('consent requires the owner password, correct origin and matching browser c
   const flow = await authorize(context);
   const replay = await approve(context, flow);
   assert.ok(replay.status >= 400);
+});
+
+test('a browser can retry a pasted password while opaque origins still fail closed', async () => {
+  const context = fixture();
+  const flow = await begin(context);
+  const headers = { accept: 'text/html' };
+  const opaque = await approve(context, flow, { headers: { ...headers, origin: 'null' } });
+  assert.equal(opaque.status, 403);
+  assert.equal(opaque.headers.get('location'), null);
+
+  const failed = await approve(context, flow, { headers, form: { password: 'wrong-owner-password' } });
+  assert.equal(failed.status, 403);
+  assert.equal(failed.headers.get('referrer-policy'), 'strict-origin');
+  const html = await failed.text();
+  assert.match(html, /role="alert"/);
+  assert.ok(html.includes(flow.fields.transaction));
+  assert.ok(!html.includes('wrong-owner-password'));
+  assert.ok(!html.includes(context.ownerPassword));
+
+  const retry = await approve(context, flow, {
+    headers, form: { password: ' ' + context.ownerPassword + '\n' },
+  });
+  assert.equal(retry.status, 303);
+  assert.equal(retry.headers.get('referrer-policy'), 'no-referrer');
 });
 
 test('code and access token bind client, PKCE and resource and redeem once', async () => {

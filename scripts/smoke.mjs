@@ -88,6 +88,7 @@ async function authorize() {
   });
   const page = await request('/oauth/authorize?' + params);
   check(page.status === 200);
+  check(page.headers.get('referrer-policy') === 'strict-origin', 'browser consent policy mismatch');
   const cookie = page.headers.get('set-cookie');
   const transaction = /name="transaction" value="([\w.-]+)"/.exec(await page.text())?.[1];
   check(transaction && cookie?.startsWith('__Host-') && /; Secure\b/i.test(cookie) && /; HttpOnly\b/i.test(cookie));
